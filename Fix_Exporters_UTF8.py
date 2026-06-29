@@ -21,6 +21,31 @@ import tde4
 FIX_LOG = []
 
 
+# ---------------------------------------------------------------------------
+# Version guard — this patch is version-locked to 3DE4 R8.1
+# ---------------------------------------------------------------------------
+SUPPORTED_VERSION_MARKER = "Release 8.1"
+
+
+def get_3de_version_string():
+    """Return the 3DE version string, or 'UNKNOWN' on any failure."""
+    try:
+        if hasattr(tde4, "get3DEVersion"):
+            v = tde4.get3DEVersion()
+            if isinstance(v, str) and v.strip():
+                return v.strip()
+    except Exception:
+        pass
+    return "UNKNOWN"
+
+
+def is_supported_3de_version(version_string):
+    """Check if version_string indicates a supported 3DE release."""
+    if not version_string or version_string == "UNKNOWN":
+        return False
+    return SUPPORTED_VERSION_MARKER in version_string
+
+
 def get_py_scripts_dir():
     install = tde4.get3DEInstallPath()
     return os.path.join(install, "sys_data", "py_scripts")
@@ -412,11 +437,35 @@ def _find_nearby_hint(content, originals):
 # Main
 # ---------------------------------------------------------------------------
 def main():
+    # -- Version check (MUST be first — abort before touching any file) --
+    version_string = get_3de_version_string()
+    if not is_supported_3de_version(version_string):
+        tde4.postQuestionRequester(
+            "Unsupported 3DE Version",
+            "Detected version:\n"
+            "%s\n"
+            "\n"
+            "This patch is only tested with:\n"
+            "3DEqualizer4 Release 8.1\n"
+            "\n"
+            "The exact-match patch table is version-specific.\n"
+            "Applying to a different 3DE version may corrupt\n"
+            "your script files.\n"
+            "\n"
+            "No files were modified." % version_string,
+            "Ok",
+        )
+        return
+
     py_scripts = get_py_scripts_dir()
 
-    # -- Confirmation dialog --
+    # -- Confirmation dialog (includes version info) --
     result = tde4.postQuestionRequester(
         "Fix Exporters UTF-8 v1.0",
+        "Detected 3DE version:\n"
+        "  %s\n"
+        "  Supported: yes\n"
+        "\n"
         "This script will modify the following files\n"
         "under your 3DEqualizer4 installation:\n"
         "\n"
@@ -438,7 +487,8 @@ def main():
         "Patches are IDEMPOTENT - safe to re-run.\n"
         "\n"
         "After the fix, you MUST fully restart\n"
-        "3DEqualizer4 (do NOT just rescan Python dirs).",
+        "3DEqualizer4 (do NOT just rescan Python dirs)."
+        % version_string,
         "Proceed", "Cancel",
     )
 

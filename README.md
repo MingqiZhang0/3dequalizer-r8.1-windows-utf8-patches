@@ -6,6 +6,9 @@
 >   affiliated with, endorsed by, or supported by Science-D-Visions.
 > - **Tested only on 3DEqualizer4 R8.1 (Windows), Chinese / GBK locale.**
 >   Other versions, platforms, and locales have NOT been tested.
+> - **Version-locked:** The patcher checks the running 3DE version at
+>   startup. If the detected version is not R8.1, it aborts **without
+>   modifying any files**. Do not force it.
 > - This repository does **NOT** redistribute any proprietary 3DEqualizer
 >   files. It only contains patch scripts and documentation.
 > - **Always back up** your 3DEqualizer4 installation folder before applying.
@@ -110,6 +113,18 @@ If something goes wrong, or you want to undo all changes:
 The rollback script restores all `.encoding_backup` files and moves the
 disabled `export_blender.py` back to `py_scripts/`. It is **idempotent**
 — safe to run multiple times.
+
+### Unsupported 3DE Version
+
+If the script reports **"Unsupported 3DE Version"**, do not force it.
+
+This patch uses an exact-match replacement table built for 3DEqualizer4
+Release 8.1. Other versions (R8.0, R8.2, R9, etc.) may have different
+script contents. Applying to a different version may corrupt your files.
+
+If you need to undo a previous patch run on a non-R8.1 installation,
+use `Rollback_UTF8_Patches.py` instead — it displays a warning but allows
+you to proceed.
 
 ## Affected Local Files
 

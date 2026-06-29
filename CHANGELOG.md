@@ -77,8 +77,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased] — planned for v0.2.0
 
+### Added
+- Runtime 3DEqualizer version detection via `tde4.get3DEVersion()`.
+- Main patch (`Fix_Exporters_UTF8.py`) aborts safely with an
+  "Unsupported 3DE Version" dialog if the detected version is not
+  3DEqualizer4 Release 8.1. No files are modified.
+- Rollback script (`Rollback_UTF8_Patches.py`) displays the detected
+  version and shows a warning on non-R8.1 environments, but still
+  allows the user to proceed (for undoing a previous patch run).
+- Confirmation dialog now shows the detected 3DE version and
+  supported status.
+
+### Planned
 - Directory restructuring (`scripts/`, `legacy/`, `docs/`).
 - `errors='replace'` risk documentation in `Potential_Risks.md`.
 - Exact-match table documented in `Fix_README.md`.
 - Expected-count validation for each `PATCH_TABLE` entry.
-- GitHub Release with binary/source archives.
