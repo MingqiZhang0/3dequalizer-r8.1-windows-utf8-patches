@@ -204,34 +204,14 @@ STATUS_TABLE = [
         "label": "Flame: export_flame_LD_3DE4_batch.py",
         "entries": [
             {
-                "comment": "create_resize_node_add_margin() line 813 - XML template",
+                "comment": "create_resize_node_add_margin/remove_margin/root_node lines 813,829,845 - XML template",
                 "patched_patterns": [
                     'open(path,"r", encoding=\'utf-8\', errors=\'replace\')',
                 ],
                 "original_patterns": [
                     'open(path,"r")',
                 ],
-                "expected_count": 1,
-            },
-            {
-                "comment": "create_resize_node_remove_margin() line 829 - XML template",
-                "patched_patterns": [
-                    'open(path,"r", encoding=\'utf-8\', errors=\'replace\')',
-                ],
-                "original_patterns": [
-                    'open(path,"r")',
-                ],
-                "expected_count": 1,
-            },
-            {
-                "comment": "create_root_node() line 845 - XML template",
-                "patched_patterns": [
-                    'open(path,"r", encoding=\'utf-8\', errors=\'replace\')',
-                ],
-                "original_patterns": [
-                    'open(path,"r")',
-                ],
-                "expected_count": 1,
+                "expected_count": 3,
             },
             {
                 "comment": "batch export line 862 - batch template",
