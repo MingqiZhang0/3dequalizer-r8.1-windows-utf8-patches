@@ -10,10 +10,44 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Planned
 
-- Future: document exact-match table maintenance and optional
-  expected-count validation.
 - Future: add partial-write regression tests using an unpatched
   3DE4 R8.1 test copy.
+
+---
+
+## [0.5.0] - 2026-06-29
+
+### Added
+
+- Added `expected_count` metadata to the fixer patch table.
+- Added partial patch recovery logic for repairable partial states.
+
+### Changed
+
+- `Fix_Exporters_UTF8.py` now uses count-based patch classification
+  instead of a binary `already_patched in content` check.
+- Merged duplicate Flame LD batch XML template patch entries into
+  one `expected_count=3` entry to align report counts with actual
+  pattern occurrences.
+- Bumped `TOOLKIT_VERSION` to `0.5.0`.
+
+### Fixed
+
+- Repairable partial patch states such as `patched 1/3, original 2`
+  can now be completed by re-running Fix.
+- Fully patched Flame LD batch XML template entries now report
+  `already patched (3/3)` instead of repeated `already patched (3/1)`.
+
+### Tested
+
+- `python -m py_compile` on all scripts.
+- Static partial-patch logic self-test (7/7 PASS).
+- Real 3DEqualizer4 Release 8.1 Windows Chinese/GBK fully patched
+  Manager Fix test pending.
+
+### Not Tested
+
+- Real 3DE partial repairable scenario is still pending.
 
 ---
 

@@ -4,7 +4,7 @@
 #
 # 3DE4.script.version: v1.0
 #
-# 3DE4.script.toolkit.version: 0.4.0
+# 3DE4.script.toolkit.version: 0.5.0
 #
 # 3DE4.script.gui: Main Window::Python
 #
@@ -60,7 +60,7 @@ def get_3de_version_string():
 #   TOOLKIT_ROOT_OVERRIDE = r"E:\3DEqualizer4\3de_utf8_patch_toolkit"
 TOOLKIT_ROOT_OVERRIDE = ""
 
-TOOLKIT_VERSION = "0.4.0"
+TOOLKIT_VERSION = "0.5.0"
 
 # Tool scripts live under this subdirectory.
 SCRIPT_DIR_NAME = "scripts"

@@ -127,6 +127,21 @@ Unchecked scopes are not modified, do not create backups, and
 report `SKIP scope not selected`.  All scopes are selected by
 default.  Advanced users can patch only specific exporters.
 
+## Partial Patch Recovery
+
+v0.5.0 adds expected-count based repair for partial patch states.
+
+Example:
+
+- expected: 3
+- patched: 1
+- original: 2
+
+Re-running Fix can patch the remaining two original occurrences.
+
+If patched count is below expected but no original pattern remains,
+the fixer warns and does not write.  Stop and verify manually.
+
 ## Rollback
 
 All modified files have backup copies saved with suffix `.encoding_backup` in the same directory.

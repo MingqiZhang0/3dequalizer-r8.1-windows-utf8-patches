@@ -239,6 +239,19 @@ Original files are backed up with a `.encoding_backup` suffix before modificatio
 - Tested on **3DEqualizer4 R8.1** under **Chinese Windows locale** only.
 - **Use at your own risk.**
 
+## Partial Patch Recovery
+
+Starting with v0.5.0, the fixer uses expected-count validation for
+each patch point.
+
+If the scanner reports `PARTIAL`, re-run `UTF8_Patch_Manager.py` and
+choose **Tools → Fix**.  If original unpatched patterns are still
+present, the fixer can complete the remaining occurrences.
+
+If the fixer reports `partial patch detected but original pattern
+not found`, stop and verify manually.  The local 3DE script file may
+differ from the tested R8.1 build or may have been manually edited.
+
 ## Validation / Smoke Test
 
 Validated manually on:
@@ -262,6 +275,14 @@ v0.4.0 Manager smoke test (manual):
 9. Confirm no `script not found` / `FileNotFoundError` /
    requester title mojibake.
 
+v0.5.0 additions:
+
+10. Fully patched re-run: expected-count entries report
+    `(1/1)` or `(3/3)`.
+11. Flame LD batch XML template reports a single `(3/3)` entry.
+12. Partial repairable states can be completed when original
+    patterns are still present (pending real-environment test).
+
 **Known limitation:** The patch is version-specific. The exact-match
 replacement table was built against a specific 3DEqualizer4 R8.1 build.
 If your local script files differ from the tested build, the patcher will
@@ -275,6 +296,7 @@ this occurs.
 | `docs/Fix_README.md` | Detailed fix notes — root causes, symptoms, rollback |
 | `docs/Potential_Risks.md` | Original R8.1 audit findings and patch-related safety notes |
 | `CHANGELOG.md` | Version history (Keep a Changelog format) |
+| `docs/RELEASE_NOTES_v0.5.0.md` | v0.5.0 GitHub Release notes |
 | `docs/RELEASE_NOTES_v0.4.0.md` | v0.4.0 GitHub Release notes |
 | `docs/RELEASE_NOTES_v0.3.0.md` | v0.3.0 GitHub Release notes |
 | `docs/RELEASE_NOTES_v0.2.0.md` | v0.2.0 GitHub Release notes |
