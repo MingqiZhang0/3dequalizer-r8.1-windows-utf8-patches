@@ -20,8 +20,8 @@
 >   undecodable bytes with `U+FFFD` (�). For user-data paths (e.g., the
 >   Piggyback Camera calibration import), we intentionally use strict UTF-8
 >   mode **without** `errors='replace'` so bad data raises a visible error.
-> - See [docs/Potential_Risks.md](docs/Potential_Risks.md) for a full audit
->   of known issues in the R8.1 codebase.
+> - See [docs/Potential_Risks.md](docs/Potential_Risks.md) for the original
+>   R8.1 audit findings and patch-related safety notes.
 
 Manual compatibility patches for 3DEqualizer4 R8.1 exporters on Chinese Windows locale.
 
@@ -267,7 +267,7 @@ this occurs.
 | File | Content |
 |------|---------|
 | `docs/Fix_README.md` | Detailed fix notes — root causes, symptoms, rollback |
-| `docs/Potential_Risks.md` | Audit findings — ~200 items catalogued, not yet patched |
+| `docs/Potential_Risks.md` | Original R8.1 audit findings and patch-related safety notes |
 | `CHANGELOG.md` | Version history (Keep a Changelog format) |
 | `docs/RELEASE_NOTES_v0.1.0.md` | v0.1.0 GitHub Release notes |
 

@@ -116,6 +116,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - requester/report text avoids non-ASCII punctuation where it may
     appear in 3DE4 UI;
   - scanner summary wording consistent between popup and console.
+- Expanded `docs/Potential_Risks.md` with patch-related risks and
+  safety notes, including `errors='replace'` tradeoffs, strict
+  Piggyback UTF-8 handling, version-locked exact-match patching,
+  rollback backup limitations, cleanup limitations, 3DE requester
+  display limitations, admin permission requirements, and restart
+  requirements.
 
 ### Planned
 - Directory restructuring (`scripts/`, `legacy/`, `docs/`).

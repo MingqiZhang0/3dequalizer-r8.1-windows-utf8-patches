@@ -222,6 +222,207 @@ The list accumulates data across repeated calls, causing unexpected behavior.
 
 ---
 
+---
+
+## 8. Patch-related Risks and Safety Notes
+
+This section documents risks introduced by the patch tools themselves,
+not by the original 3DE4 R8.1 scripts.
+
+The sections below assume the reader is familiar with the tools listed
+in the repository README.
+
+---
+
+### 8.1 `errors='replace'` tradeoff
+
+Most read-mode `open()` fixes in this patch use:
+
+```python
+encoding='utf-8', errors='replace'
+```
+
+**Benefit:** Prevents `UnicodeDecodeError` on Windows with Chinese / GBK
+locale when a UTF-8 file is read without an explicit encoding.
+
+**Risk:** Invalid byte sequences that cannot be decoded as UTF-8 are
+silently replaced with the Unicode replacement character `U+FFFD`.
+This is a crash-prevention tradeoff, not a perfect decoding strategy.
+
+**Where it is used:** Script header reads (`getScriptVersion`),
+preferences file reads, log file reads, and internal XML/template reads
+(Flame Matchbox). For these low-risk paths, silent replacement is
+generally preferable to a crash that blocks the exporter GUI.
+
+**Where it is NOT used:** See section 8.2.
+
+---
+
+### 8.2 Piggyback Camera exception: strict UTF-8
+
+`calcMainCameraViaPiggybackCamera.py` line 1134 (`importCalibration`)
+reads **user-supplied calibration data**.
+
+The patch applies **strict UTF-8** without `errors='replace'`:
+
+```python
+open(path,"r", encoding='utf-8')
+```
+
+**Reason:** If a user calibration file contains invalid bytes, silently
+replacing them could corrupt the calibration result without the user
+noticing. A visible `UnicodeDecodeError` is safer than silent data
+corruption.
+
+If your calibration files are not valid UTF-8, you will see an error
+instead of silently wrong results. This is intentional.
+
+---
+
+### 8.3 Exact-match table is version-locked
+
+`Fix_Exporters_UTF8.py` uses an exact-match replacement table built
+from a live scan of 3DEqualizer4 Release 8.1 script files.
+
+- If the official exporter scripts differ in R8.0, R8.2, R9, or other
+  platforms, the expected patterns may not match.
+- The main patch performs a runtime version check via
+  `tde4.get3DEVersion()` and aborts with "Unsupported 3DE Version" if
+  the detected version is not Release 8.1.
+- Do not bypass the version guard. Applying the patch to a different
+  version may silently skip entries (WARN) or, in the worst case,
+  produce syntactically incorrect replacements.
+
+The read-only `Scan_Exporters_UTF8_Status.py` scanner does **not**
+enforce the version guard and can be run on any version for diagnosis.
+
+---
+
+### 8.4 Backup and rollback limitations
+
+- `Fix_Exporters_UTF8.py` creates `.encoding_backup` files only when
+  it actually writes to a target file. An all-SKIP run (files already
+  patched) creates no new backups.
+- If `.encoding_backup` files are missing, `Rollback_UTF8_Patches.py`
+  **cannot** restore the original exporter source files.
+- Rollback may still restore the disabled legacy Blender script
+  (`py_scripts_disabled/export_blender.py.bak`) if it exists.
+- The only reliable recovery method remains a full external backup of
+  the 3DEqualizer4 installation directory made before applying any
+  patch.
+
+Recommended safe workflow:
+
+```text
+Scan -> Backup -> Fix -> Scan
+```
+
+Or, at minimum:
+
+```text
+Backup -> Fix -> Scan
+```
+
+Running `Backup_UTF8_Patch_Targets.py` before `Fix_Exporters_UTF8.py`
+ensures local `.encoding_backup` files exist regardless of whether the
+main patch's deferred backup logic triggers.
+
+---
+
+### 8.5 Backup-only script limitations
+
+`Backup_UTF8_Patch_Targets.py` is a preflight tool.
+
+- It only creates `.encoding_backup` for four known target files.
+- It refuses to back up a file that already contains `encoding='utf-8'`
+  or `encoding="utf-8"`, because saving patched content as "original"
+  would make rollback meaningless.
+- It is **not** a replacement for a full external backup of the
+  3DEqualizer4 installation folder.
+- Running it **after** applying the patch provides no benefit and will
+  produce warnings.
+
+---
+
+### 8.6 Cleanup tool limitations
+
+`Cleanup_UTF8_Backups.py` deletes known `.encoding_backup` files.
+
+- After cleanup, `Rollback_UTF8_Patches.py` cannot restore exporter
+  source files from local backups.
+- Cleanup is optional and requires double confirmation.
+- Cleanup does **not** delete `py_scripts_disabled/export_blender.py.bak`
+  or `py_scripts/export_blender.py.bak`.
+- If you may need to roll back, do not run cleanup.
+
+---
+
+### 8.7 Requester / UI display limitations
+
+3DEqualizer4's `tde4.postQuestionRequester()` dialog has limited
+display capacity for long text and may render certain Unicode
+characters incorrectly (mojibake).
+
+All tools in this repository use the following strategy:
+
+- **Popup:** short summary only (max ~12-14 lines, ASCII text).
+- **Full report:** printed to the 3DE Python console via `print()`.
+
+Users should check the 3DE Script Editor output for complete details.
+Do not rely on the popup alone for diagnostic information.
+
+Custom requesters (`tde4.createCustomRequester`,
+`tde4.addTextAreaWidget`) were tested and found to display text content
+unreliably in 3DE4 R8.1. They are not used.
+
+---
+
+### 8.8 Administrator permission and Program Files
+
+If 3DEqualizer4 is installed under `C:\Program Files\` or another
+protected directory:
+
+- Writing to `sys_data/py_scripts/` requires administrator privileges.
+- Launch 3DEqualizer4 as Administrator before running any tool that
+  modifies files (`Fix`, `Rollback`, `Backup`, `Cleanup`).
+- The read-only `Scan_Exporters_UTF8_Status.py` scanner does not
+  require write access and can generally run without elevation.
+- Permission failures during patch, rollback, backup, or cleanup may
+  leave the installation in an inconsistent state.
+
+---
+
+### 8.9 Restart requirement
+
+3DEqualizer4 caches Python scripts at startup.
+
+After applying the patch or performing a rollback:
+
+- **Fully exit** 3DEqualizer4.
+- Restart 3DEqualizer4 normally.
+- "Rescan Python Directories" is **not** sufficient.
+
+Do not apply the patch or perform a rollback while 3DEqualizer4 has
+unsaved project work open.
+
+---
+
+### 8.10 Risk summary table
+
+| Area | Risk | Mitigation |
+|------|------|------------|
+| `errors='replace'` | Invalid bytes silently replaced | Used only for low-risk header/prefs/log/template reads |
+| User calibration data | Silent replacement could corrupt data | Piggyback import uses strict UTF-8, no `errors='replace'` |
+| Version mismatch | Exact-match table may not match other 3DE versions | Main patch aborts unless R8.1 is detected |
+| Missing backups | Rollback cannot restore exporter source files | Keep external full installation backup |
+| Backup after patch | Would save patched content as original | `Backup_UTF8_Patch_Targets.py` refuses to back up patched files |
+| Cleanup | Deletes local rollback backups | Optional only, double confirmation, does not delete Blender backup |
+| 3DE requester UI | Long text may be clipped; Unicode may render incorrectly | Short popup + full console report |
+| Admin permissions | Write to `Program Files` may fail | Run 3DE as Administrator |
+| Restart | 3DE caches scripts at startup | Full exit and restart after patch/rollback |
+
+---
+
 ## Audit Date
 
 2026-06-29
