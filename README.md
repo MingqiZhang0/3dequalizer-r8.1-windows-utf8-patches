@@ -273,14 +273,6 @@ this occurs.
 | `docs/RELEASE_NOTES_v0.2.0.md` | v0.2.0 GitHub Release notes |
 | `docs/RELEASE_NOTES_v0.1.0.md` | v0.1.0 GitHub Release notes |
 
-### Experimental: Unicode Path Probe
-
-`Probe_Unicode_Paths.py` is a read-only diagnostic script for
-checking whether Chinese folder names are handled correctly by
-Python, 3DE requester UI, or specific import scripts.  It does
-not modify files.  Set `TEST_UNICODE_PATH` at the top of the
-script to test a specific Chinese-named folder.
-
 ## Unreleased (v0.3.0-dev)
 
 `UTF8_Patch_Manager.py` is a unified launcher (main menu: Scan |
