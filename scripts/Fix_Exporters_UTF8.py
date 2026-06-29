@@ -221,6 +221,7 @@ PATCH_TABLE = [
                     "open(os.sep.join([dirname, fname]), 'r')",
                 ],
                 "replacement": "open(os.sep.join([dirname, fname]), 'r', encoding='utf-8', errors='replace')",
+                "expected_count": 1,
             },
             {
                 "comment": "_preferences_editor() line 1014 - reads user prefs",
@@ -231,6 +232,7 @@ PATCH_TABLE = [
                     "open(preferences_file, 'r')",
                 ],
                 "replacement": "open(preferences_file, 'r', encoding='utf-8', errors='replace')",
+                "expected_count": 1,
             },
             {
                 "comment": "read_preferences_file() line 1249 - reads user prefs",
@@ -241,6 +243,7 @@ PATCH_TABLE = [
                     "open(os.sep.join([preferences_dir, file_name]), 'r')",
                 ],
                 "replacement": "open(os.sep.join([preferences_dir, file_name]), 'r', encoding='utf-8', errors='replace')",
+                "expected_count": 1,
             },
             {
                 "comment": "main() line 3834 - reads log file",
@@ -251,6 +254,7 @@ PATCH_TABLE = [
                     "open(log, 'r')",
                 ],
                 "replacement": "open(log, 'r', encoding='utf-8', errors='replace')",
+                "expected_count": 1,
             },
             {
                 "comment": "main() lines 3749,3862,3881 - re-executes self (3 occurrences)",
@@ -261,6 +265,7 @@ PATCH_TABLE = [
                     "exec(open(script_path).read())",
                 ],
                 "replacement": "exec(open(script_path, encoding='utf-8', errors='replace').read())",
+                "expected_count": 3,
             },
         ],
     },
@@ -281,6 +286,7 @@ PATCH_TABLE = [
                     "open(os.sep.join([preferences_dir, file_name]), 'r')",
                 ],
                 "replacement": "open(os.sep.join([preferences_dir, file_name]), 'r', encoding='utf-8', errors='replace')",
+                "expected_count": 1,
             },
             {
                 "comment": "_preferences_editor() line 2655 - reads user prefs",
@@ -291,6 +297,7 @@ PATCH_TABLE = [
                     "open(preferences_file, 'r')",
                 ],
                 "replacement": "open(preferences_file, 'r', encoding='utf-8', errors='replace')",
+                "expected_count": 1,
             },
             {
                 "comment": "main() line 3112 - reads log file",
@@ -301,6 +308,7 @@ PATCH_TABLE = [
                     "open(log, 'r')",
                 ],
                 "replacement": "open(log, 'r', encoding='utf-8', errors='replace')",
+                "expected_count": 1,
             },
             {
                 "comment": "main() lines 3031,3140,3158 - re-executes self (3 occurrences); "
@@ -313,6 +321,7 @@ PATCH_TABLE = [
                     "exec(open(script_path).read())",
                 ],
                 "replacement": "exec(open(script_path, encoding='utf-8', errors='replace').read())",
+                "expected_count": 3,
             },
         ],
     },
@@ -344,6 +353,7 @@ PATCH_TABLE = [
                     'open(path,"r")',
                 ],
                 "replacement": 'open(path,"r", encoding=\'utf-8\')',
+                "expected_count": 1,
             },
         ],
     },
@@ -364,6 +374,7 @@ PATCH_TABLE = [
                     'open(path,"r")',
                 ],
                 "replacement": 'open(path,"r", encoding=\'utf-8\', errors=\'replace\')',
+                "expected_count": 1,
             },
             {
                 "comment": "create_resize_node_remove_margin() line 829 - XML template",
@@ -374,6 +385,7 @@ PATCH_TABLE = [
                     'open(path,"r")',
                 ],
                 "replacement": 'open(path,"r", encoding=\'utf-8\', errors=\'replace\')',
+                "expected_count": 1,
             },
             {
                 "comment": "create_root_node() line 845 - XML template",
@@ -384,6 +396,7 @@ PATCH_TABLE = [
                     'open(path,"r")',
                 ],
                 "replacement": 'open(path,"r", encoding=\'utf-8\', errors=\'replace\')',
+                "expected_count": 1,
             },
             {
                 "comment": "batch export line 862 - batch template (different path arg)",
@@ -394,6 +407,7 @@ PATCH_TABLE = [
                     'open(os.path.join(self._tde4_flame_path,"pipeline.batch.template.xml"),"r")',
                 ],
                 "replacement": 'open(os.path.join(self._tde4_flame_path,"pipeline.batch.template.xml"),"r", encoding=\'utf-8\', errors=\'replace\')',
+                "expected_count": 1,
             },
             {
                 "comment": "fingerprint check line 1038 - fingerprint file (different path arg)",
@@ -404,6 +418,7 @@ PATCH_TABLE = [
                     'open(os.path.join(path,"fingerprint"),"r")',
                 ],
                 "replacement": 'open(os.path.join(path,"fingerprint"),"r", encoding=\'utf-8\', errors=\'replace\')',
+                "expected_count": 1,
             },
         ],
     },
@@ -434,15 +449,14 @@ def apply_patch_table(entry):
     """
     Apply every fix-entry in *entry* to a single target file.
 
-    For each fix-entry:
-      1. Check already_patched patterns - if ANY is in content -> SKIP
-      2. Check originals (in order, most-specific first) - first match wins
-      3. Replace matched original with replacement -> OK
-      4. If nothing matched -> WARN
+    Count-based logic per entry:
+      A. patched_count >= expected -> SKIP (fully patched)
+      B. 0 < patched_count < expected, original_count > 0 -> repair partial
+      C. 0 < patched_count < expected, original_count == 0 -> WARN partial
+      D. patched_count == 0, original_count > 0 -> normal patch
+      E. patched_count == 0, original_count == 0 -> WARN unknown
 
-    Backup is deferred until the first actual write (no backup if all SKIP).
-
-    Returns a list of report strings.
+    Backup is deferred until the first actual write.
     """
     target_basename = entry["file"]
     label = entry["label"]
@@ -465,29 +479,51 @@ def apply_patch_table(entry):
         already_patched = e.get("already_patched", [])
         originals = e.get("originals", [])
         replacement = e["replacement"]
+        expected = e.get("expected_count", 1)
 
-        # --- 1. Check if already patched (any variant) ---
-        already = False
+        # Count patterns
+        patched_count = 0
         for ap in already_patched:
-            if ap in content:
-                report_lines.append(
-                    "[SKIP] %s: already patched - %s"
-                    % (label, _truncate(comment, 60))
-                )
-                already = True
-                break
-        if already:
+            patched_count += content.count(ap)
+
+        original_count = 0
+        for orig in originals:
+            original_count += content.count(orig)
+
+        # --- A. Fully patched ---
+        if patched_count >= expected:
+            report_lines.append(
+                "[SKIP] %s: already patched (%d/%d) - %s"
+                % (label, patched_count, expected, _truncate(comment, 50))
+            )
             continue
 
-        # --- 2. Find a matching original (most-specific first) ---
+        # --- C. Partial but not repairable ---
+        if patched_count > 0 and original_count == 0:
+            report_lines.append(
+                "[WARN] %s: partial patch detected but original pattern "
+                "not found (patched %d/%d) - %s"
+                % (label, patched_count, expected, _truncate(comment, 45))
+            )
+            continue
+
+        # --- B. Partial repairable, or D. Unpatched repairable ---
+        if patched_count > 0:
+            report_lines.append(
+                "[INFO] %s: partial patch detected (patched %d/%d, original %d) - %s"
+                % (label, patched_count, expected, original_count,
+                   _truncate(comment, 40))
+            )
+
+        # --- Find a matching original ---
         matched_original = None
         for orig in originals:
             if orig in content:
                 matched_original = orig
                 break
 
+        # --- E. Unknown ---
         if matched_original is None:
-            # Build a hint: search for nearby open/exec lines
             hint = _find_nearby_hint(content, originals)
             report_lines.append(
                 "[WARN] %s: expected pattern not found - %s\n"
@@ -497,7 +533,7 @@ def apply_patch_table(entry):
             )
             continue
 
-        # --- 3. Defer backup until first actual write ---
+        # --- Defer backup until first actual write ---
         if not backup_done:
             backup_fresh = _backup(target)
             if backup_fresh:
@@ -507,7 +543,7 @@ def apply_patch_table(entry):
                 )
             backup_done = True
 
-        # --- 4. Apply replacement ---
+        # --- Apply replacement ---
         count = content.count(matched_original)
         content = content.replace(matched_original, replacement)
         report_lines.append(
