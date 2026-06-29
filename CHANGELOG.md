@@ -8,6 +8,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+
+- `Probe_Unicode_Paths.py` - read-only diagnostic script for
+  investigating Chinese / Unicode path handling in 3DEqualizer4
+  R8.1 on Windows.  Reports Python encoding settings, path
+  accessibility, listdir visibility, native requester behavior,
+  and a diagnostic classification (Case A/B/C/D).
+
 ### Planned
 
 - Future: move individual tools into `scripts/` after the manager
