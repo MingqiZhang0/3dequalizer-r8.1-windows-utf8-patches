@@ -102,7 +102,10 @@ def restore_backups(backups):
         rollback is always possible.
     """
     if not backups:
-        ROLLBACK_LOG.append("[SKIP] No .encoding_backup files found in py_scripts/.")
+        ROLLBACK_LOG.append("[WARN] No .encoding_backup files found.")
+        ROLLBACK_LOG.append("       Exporter source files were NOT restored.")
+        ROLLBACK_LOG.append("       Use an external full 3DE backup if original")
+        ROLLBACK_LOG.append("       files are needed.")
         return
 
     for original_path, backup_path in sorted(backups.items()):
@@ -231,6 +234,23 @@ def main():
             )
     else:
         preview_lines.append("  (No .encoding_backup files found)")
+        preview_lines.append(
+            "\n"
+            "WARNING:\n"
+            "\n"
+            "No .encoding_backup files were found.\n"
+            "\n"
+            "Rollback cannot restore the original exporter\n"
+            "source files without these local backups.\n"
+            "\n"
+            "It may still restore the disabled legacy Blender\n"
+            "script if py_scripts_disabled/export_blender.py.bak\n"
+            "exists.\n"
+            "\n"
+            "If you need the original exporter files, restore\n"
+            "them from your external full 3DE installation\n"
+            "backup.\n"
+        )
 
     if has_disabled_blender:
         preview_lines.append(

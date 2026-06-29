@@ -605,6 +605,22 @@ def main():
                    + existence_errors
                    + (1 if "still active" in " ".join(blender_lines) else 0))
 
+    # --- Add backup warnings for console report ---
+    if backup_count == 0:
+        backup_lines.append("")
+        backup_lines.append("WARNING:")
+        backup_lines.append("  No local .encoding_backup files were found.")
+        backup_lines.append("  Rollback cannot restore original exporter files")
+        backup_lines.append("  without these backups.")
+        backup_lines.append("")
+        backup_lines.append("Optional:")
+        backup_lines.append("  If you have not applied the patch yet, run")
+        backup_lines.append("  Backup_UTF8_Patch_Targets.py to create local")
+        backup_lines.append("  backups before patching.")
+    else:
+        backup_lines.append("")
+        backup_lines.append("Local rollback backups are present.")
+
     # --- Build full report for console ---
     summary_text = build_summary(version_string, version_ok, blender_lines,
                                  patch_counts, backup_count, existence_errors)

@@ -52,8 +52,9 @@ This repository addresses two issues with 3DEqualizer4 R8.1 on Chinese Windows
 |------|------|--------|
 | `Fix_Exporters_UTF8.py` | **Main patch** — fixes Blender name collision + UTF-8 encoding in Blender, Maya, Piggyback Camera, and Flame Matchbox exporters (4 files). Uses exact-match replacement table. Run this one. | ✅ **Use this** |
 | `Rollback_UTF8_Patches.py` | **Rollback** — restores all `.encoding_backup` files and moves the disabled `export_blender.py` back. | ↩ Use if needed |
-| `Scan_Exporters_UTF8_Status.py` | **Read-only scanner** — checks current patch status, version compatibility, Blender legacy script state, and backup files. Does not modify files. | 🔍 Optional preflight / diagnosis |
-| `Cleanup_UTF8_Backups.py` | **Optional cleanup** — deletes known `.encoding_backup` files after the patch has been verified and an external backup exists. Does **not** delete the disabled Blender legacy backup. | ⚠️ Optional, use with caution |
+| `Backup_UTF8_Patch_Targets.py` | **Backup only** — creates local `.encoding_backup` files for known patch targets before applying the patch. Does not patch, move, or delete files. | Optional preflight backup |
+| `Scan_Exporters_UTF8_Status.py` | **Read-only scanner** — checks current patch status, version compatibility, Blender legacy script state, and backup files. Does not modify files. | Optional preflight / diagnosis |
+| `Cleanup_UTF8_Backups.py` | **Optional cleanup** — deletes known `.encoding_backup` files after the patch has been verified and an external backup exists. Does **not** delete the disabled Blender legacy backup. | Optional, use with caution |
 | `legacy/Fix_Blender_Export.py` | **Legacy / Blender-only helper** — Blender fix only. Superseded by `Fix_Exporters_UTF8.py`. Kept for reference. | Do not use as default entry point |
 
 ## Repository Layout
@@ -133,6 +134,12 @@ The rollback script restores all `.encoding_backup` files and moves the
 disabled `export_blender.py` back to `py_scripts/`. It is **idempotent**
 — safe to run multiple times.
 
+Rollback requires `.encoding_backup` files to restore the original
+exporter source files. If those backup files are missing, rollback can
+still restore the disabled legacy Blender script if available, but it
+cannot restore modified exporter files. In that case, restore from
+your external full 3DE installation backup.
+
 ### Unsupported 3DE Version
 
 If the script reports **"Unsupported 3DE Version"**, do not force it.
@@ -144,6 +151,31 @@ script contents. Applying to a different version may corrupt your files.
 If you need to undo a previous patch run on a non-R8.1 installation,
 use `Rollback_UTF8_Patches.py` instead — it displays a warning but allows
 you to proceed.
+
+### Optional: Backup Patch Targets Only
+
+If you want to create local `.encoding_backup` files before applying
+the patch, run `Backup_UTF8_Patch_Targets.py` inside 3DEqualizer4
+(Main Window > Python > Run Script...).
+
+This script only copies the known patch target exporter files to
+`.encoding_backup` files. It does not apply the patch, move
+`export_blender.py`, or delete anything.
+
+Use this if:
+
+- you want an explicit backup-only step before patching;
+- you only need local backups of the patch target files;
+- you suspect the main patch's automatic backup may not run or
+  may be skipped (e.g., if all patch points are already patched).
+
+Do **not** run it after the files have already been patched. If a
+file appears already patched, the backup script refuses to create a
+`.encoding_backup`, because doing so would save patched content
+instead of original content.
+
+This is **not** a replacement for a full external backup of your
+3DEqualizer4 installation folder.
 
 ### Optional: Scan Current Status
 

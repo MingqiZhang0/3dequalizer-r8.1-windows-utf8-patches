@@ -94,6 +94,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   known `.encoding_backup` files.  Requires double confirmation;
   does not delete disabled Blender legacy backups.
 - Scanner wording updated from "Backups found" to "Backup files found".
+- `Backup_UTF8_Patch_Targets.py` — a backup-only preflight tool for
+  known UTF-8 patch target files. Refuses to back up files that
+  already appear patched.
+- Rollback now warns clearly when `.encoding_backup` files are
+  missing and exporter source files cannot be restored from local
+  backups.
+- Scanner console report now warns when local rollback backups are
+  missing and suggests running the backup tool before patching.
 
 ### Changed
 - Light repository layout cleanup:
