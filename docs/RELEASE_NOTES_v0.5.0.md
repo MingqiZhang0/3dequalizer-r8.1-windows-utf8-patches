@@ -51,8 +51,12 @@ single `already patched (3/3)` line instead of three `(3/1)` lines.
 
 - `python -m py_compile` on all scripts.
 - Static partial-patch logic self-test (7/7 PASS).
-- Real 3DE4 R8.1 fully patched Manager Fix test pending.
-- Real 3DE4 R8.1 partial repairable scenario test pending.
+- Real 3DE4 R8.1 fully patched Manager Fix test: PASS (all expected
+  counts correct, no `(3/1)`, no WARN, no mojibake).
+- Real 3DE4 R8.1 Scanner test: PASS (FULLY PATCHED, 13/13 entries,
+  consistent with Fix).
+- Real 3DE4 R8.1 partial repairable test: PASS (Maya self-exec
+  `patched 1/3, original 2` repaired to `3/3`).
 
 ---
 
@@ -78,7 +82,7 @@ not found`, stop and verify manually.
 - Does not redistribute proprietary 3DEqualizer files.
 - Back up your 3DE installation before use.
 - Use at your own risk.
-- Partial repairable real-environment test is pending.
+- All real 3DE4 R8.1 tests passed (see Validation section).
 
 ---
 

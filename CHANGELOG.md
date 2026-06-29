@@ -42,12 +42,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - `python -m py_compile` on all scripts.
 - Static partial-patch logic self-test (7/7 PASS).
-- Real 3DEqualizer4 Release 8.1 Windows Chinese/GBK fully patched
-  Manager Fix test pending.
-
-### Not Tested
-
-- Real 3DE partial repairable scenario is still pending.
+- Real 3DEqualizer4 Release 8.1 Windows Chinese/GBK Manager tests:
+  - fully patched Fix re-run: Blender self-exec `(3/3)`, Maya
+    self-exec `(3/3)`, Flame XML template single `(3/3)`, no
+    `(3/1)`, no WARN, no FileNotFoundError, no requester mojibake;
+  - Scanner: FULLY PATCHED, 13/13 entries patched, consistent
+    expected-count reports;
+  - partial repairable: Maya self-exec `patched 1/3, original 2`
+    was repaired to `3/3`; Scanner confirmed FULLY PATCHED after.
 
 ---
 
