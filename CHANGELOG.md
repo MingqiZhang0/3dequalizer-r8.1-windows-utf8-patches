@@ -15,6 +15,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   main launcher.
 - Updated the manager launcher to resolve and run tools from the
   new `scripts/` layout.
+- README updated for Manager-first layout.
+- Manager main menu now shows toolkit version (`v0.4.0`).
+
+### Removed
+
+- Removed legacy Blender-only helper from the active tree.  The
+  Blender conflict fix remains in `scripts/Fix_Exporters_UTF8.py`.
 
 ### Planned
 

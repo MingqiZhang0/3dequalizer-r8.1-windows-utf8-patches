@@ -4,6 +4,8 @@
 #
 # 3DE4.script.version: v1.0
 #
+# 3DE4.script.toolkit.version: 0.4.0
+#
 # 3DE4.script.gui: Main Window::Python
 #
 # 3DE4.script.comment: Unified launcher for the 3DE4 R8.1 Windows UTF-8 patch toolkit.
@@ -57,6 +59,8 @@ def get_3de_version_string():
 # Use this only if automatic search fails.  Example:
 #   TOOLKIT_ROOT_OVERRIDE = r"E:\3DEqualizer4\3de_utf8_patch_toolkit"
 TOOLKIT_ROOT_OVERRIDE = ""
+
+TOOLKIT_VERSION = "0.4.0"
 
 # Tool scripts live under this subdirectory.
 SCRIPT_DIR_NAME = "scripts"
@@ -518,7 +522,7 @@ def main():
     while True:
         result = tde4.postQuestionRequester(
             "UTF-8 Patch Manager",
-            "UTF-8 Patch Manager\n"
+            "UTF-8 Patch Manager v%s\n"
             "\n"
             "Detected 3DE version:\n"
             "  %s\n"
@@ -533,7 +537,7 @@ def main():
             "\n"
             "This manager only launches existing tools.\n"
             "Each tool keeps its own confirmation dialog."
-            % (version_string, root_status),
+            % (TOOLKIT_VERSION, version_string, root_status),
             "Scan", "Tools", "Help", "Cancel",
         )
 

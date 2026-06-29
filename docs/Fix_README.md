@@ -97,15 +97,17 @@ Note: Piggyback Camera calibration import reads user-supplied data, so it uses s
 Run the companion script **inside 3DEqualizer4**:
 
 ```
-Main Window > Python > Run Script... -> Select Fix_Exporters_UTF8.py
+Main Window > Python > Run Script... -> Select UTF8_Patch_Manager.py
 ```
+
+or run individual tools from `scripts/`.
 
 Then **fully restart 3DE4** (do NOT just use `tde4.rescanPythonDirs()`).
 
-> **Note:** [`../legacy/Fix_Blender_Export.py`](../legacy/Fix_Blender_Export.py)
-> is a legacy Blender-only helper kept for reference. It is superseded by
-> [`../Fix_Exporters_UTF8.py`](../Fix_Exporters_UTF8.py). Do not use it as
-> the default entry point.
+The recommended entry point is `UTF8_Patch_Manager.py` in the
+repository root.  Individual tools are in `scripts/`.
+The Blender exporter conflict fix is part of
+`scripts/Fix_Exporters_UTF8.py`.
 
 ## Patch Scope Selection
 

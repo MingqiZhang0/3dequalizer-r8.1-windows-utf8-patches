@@ -55,8 +55,6 @@ This repository addresses two issues with 3DEqualizer4 R8.1 on Chinese Windows
 | `scripts/Backup_UTF8_Patch_Targets.py` | **Backup only** — creates local `.encoding_backup` files for known patch targets before applying the patch. Does not patch, move, or delete files. | Optional preflight backup |
 | `scripts/Scan_Exporters_UTF8_Status.py` | **Read-only scanner** — checks current patch status, version compatibility, Blender legacy script state, and backup files. Does not modify files. | Optional preflight / diagnosis |
 | `scripts/Cleanup_UTF8_Backups.py` | **Optional cleanup** — deletes known `.encoding_backup` files after the patch has been verified and an external backup exists. Does **not** delete the disabled Blender legacy backup. | Optional, use with caution |
-| `legacy/Fix_Blender_Export.py` | **Legacy / Blender-only helper** — Blender fix only. Superseded by `Fix_Exporters_UTF8.py`. Kept for reference. | Do not use as default entry point |
-
 ## Repository Layout
 
 `UTF8_Patch_Manager.py` is the recommended launcher and is kept in the
@@ -73,7 +71,10 @@ Individual tools live in `scripts/`:
 
 Detailed documentation is under `docs/`.
 
-Legacy helper scripts are under `legacy/`.
+The old Blender-only helper script has been removed from the active
+tree.  For normal use, run `UTF8_Patch_Manager.py` from the repository
+root.  The Blender exporter conflict fix is included in
+`scripts/Fix_Exporters_UTF8.py`.
 
 ## Tested Environment
 
