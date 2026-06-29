@@ -16,6 +16,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   accessibility, listdir visibility, native requester behavior,
   and a diagnostic classification (Case A/B/C/D).
 
+### Changed
+
+- `Probe_Unicode_Paths.py` now supports interactive folder/file
+  selection, so users do not need to edit `TEST_UNICODE_PATH`
+  for normal testing.
+
 ### Planned
 
 - Future: move individual tools into `scripts/` after the manager
