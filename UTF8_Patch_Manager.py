@@ -28,7 +28,6 @@ Menu structure:
 """
 
 import os
-import sys
 import traceback
 import tde4
 

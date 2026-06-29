@@ -459,6 +459,21 @@ def build_short_summary(version_string, version_ok, blender_status_short, patch_
     )
 
 
+def _classify_patch_status(patch_counts, existence_errors):
+    """Return a status label from patch point counts."""
+    pc = patch_counts
+    total = pc.get("total_entries", 0)
+    if pc["patched"] == total and pc["unpatched"] == 0 and pc["partial"] == 0 and pc["unknown"] == 0:
+        return "FULLY PATCHED"
+    if pc["patched"] == 0 and pc["unpatched"] > 0 and pc["partial"] == 0 and pc["unknown"] == 0:
+        return "NOT PATCHED"
+    if pc["patched"] > 0 and (pc["unpatched"] > 0 or pc["partial"] > 0):
+        return "PARTIALLY PATCHED"
+    if pc["unknown"] > 0 or existence_errors > 0:
+        return "NEEDS REVIEW"
+    return "UNKNOWN"
+
+
 def build_summary(version_string, version_ok, blender_lines, patch_counts,
                   backup_count, existence_errors):
     """Build the detailed summary block for the full console report."""
@@ -466,16 +481,7 @@ def build_summary(version_string, version_ok, blender_lines, patch_counts,
 
     pc = patch_counts
     total = pc.get("total_entries", 0)
-    if pc["patched"] == total and pc["unpatched"] == 0 and pc["partial"] == 0 and pc["unknown"] == 0:
-        patch_status = "FULLY PATCHED"
-    elif pc["patched"] == 0 and pc["unpatched"] > 0 and pc["partial"] == 0 and pc["unknown"] == 0:
-        patch_status = "NOT PATCHED"
-    elif pc["patched"] > 0 and (pc["unpatched"] > 0 or pc["partial"] > 0):
-        patch_status = "PARTIALLY PATCHED"
-    elif pc["unknown"] > 0 or existence_errors > 0:
-        patch_status = "NEEDS REVIEW"
-    else:
-        patch_status = "UNKNOWN"
+    patch_status = _classify_patch_status(patch_counts, existence_errors)
 
     has_active_warn = any("still active" in l for l in blender_lines)
     has_disabled_ok = any("legacy script disabled" in l for l in blender_lines)
@@ -568,20 +574,9 @@ def main():
     else:
         blender_status_short = "UNKNOWN"
 
-    pc = patch_counts
-    total = pc.get("total_entries", 0)
-    if pc["patched"] == total and pc["unpatched"] == 0 and pc["partial"] == 0 and pc["unknown"] == 0:
-        patch_status_short = "FULLY PATCHED"
-    elif pc["patched"] == 0 and pc["unpatched"] > 0 and pc["partial"] == 0 and pc["unknown"] == 0:
-        patch_status_short = "NOT PATCHED"
-    elif pc["patched"] > 0 and (pc["unpatched"] > 0 or pc["partial"] > 0):
-        patch_status_short = "PARTIALLY PATCHED"
-    elif pc["unknown"] > 0 or existence_errors > 0:
-        patch_status_short = "NEEDS REVIEW"
-    else:
-        patch_status_short = "UNKNOWN"
+    patch_status_short = _classify_patch_status(patch_counts, existence_errors)
 
-    issue_count = (pc["unpatched"] + pc["partial"] + pc["unknown"]
+    issue_count = (patch_counts["unpatched"] + patch_counts["partial"] + patch_counts["unknown"]
                    + existence_errors
                    + (1 if "still active" in " ".join(blender_lines) else 0))
 

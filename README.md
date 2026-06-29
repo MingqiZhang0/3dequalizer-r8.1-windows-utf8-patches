@@ -254,6 +254,8 @@ of `UTF8_Patch_Manager.py` and set it to the toolkit folder.
 | `docs/RELEASE_NOTES_v0.5.0.md` | v0.5.0 release notes |
 | `docs/RELEASE_NOTES_v0.4.0.md` | v0.4.0 release notes |
 | `docs/RELEASE_NOTES_v0.3.0.md` | v0.3.0 release notes |
+| `docs/RELEASE_NOTES_v0.2.0.md` | v0.2.0 release notes |
+| `docs/RELEASE_NOTES_v0.1.0.md` | v0.1.0 release notes |
 
 ---
 

@@ -212,14 +212,14 @@ The list accumulates data across repeated calls, causing unexpected behavior.
 
 | Level | Category | Count | Recommendation |
 |-------|----------|-------|----------------|
-| 🔴 High | Read `open()` without UTF-8 (non-exporter scripts) | ~27 sites | Fix on-demand if users report garbled import/export |
-| 🔴 High | Write `open()` without UTF-8 | ~71 sites | May garble CJK characters; fix on-demand |
-| 🟠 Medium | Bare `except:` / `except: pass` | ~77 sites | Improve only when debugging specific issues |
-| 🟠 Medium | Missing None checks | Widespread | Crash risk when no camera/lens is active — edge case |
-| 🟡 Low | Division-by-zero | ~15 sites | Extremely rare edge conditions |
-| 🟡 Low | Mutable default arguments | 2 sites | Only triggered in specific re-entrant scenarios |
-| 🔵 Info | Debug artifacts | ~7 sites | Harmless but not clean |
-| 🔵 Info | Script metadata gaps | ~18 scripts | No functional impact |
+| [HIGH] | Read `open()` without UTF-8 (non-exporter scripts) | ~27 sites | Fix on-demand if users report garbled import/export |
+| [HIGH] | Write `open()` without UTF-8 | ~71 sites | May garble CJK characters; fix on-demand |
+| [MEDIUM] | Bare `except:` / `except: pass` | ~77 sites | Improve only when debugging specific issues |
+| [MEDIUM] | Missing None checks | Widespread | Crash risk when no camera/lens is active — edge case |
+| [LOW] | Division-by-zero | ~15 sites | Extremely rare edge conditions |
+| [LOW] | Mutable default arguments | 2 sites | Only triggered in specific re-entrant scenarios |
+| [INFO] | Debug artifacts | ~7 sites | Harmless but not clean |
+| [INFO] | Script metadata gaps | ~18 scripts | No functional impact |
 
 
 

@@ -169,7 +169,7 @@ def restore_disabled_blender_script(py_scripts_dir):
     legacy_bak = os.path.join(py_scripts_dir, "export_blender.py.bak")
     if os.path.isfile(legacy_bak):
         try:
-            os.rename(legacy_bak, target_file)
+            shutil.move(legacy_bak, target_file)
             ROLLBACK_LOG.append(
                 "[OK] Restored from legacy location:\n"
                 "     export_blender.py.bak -> export_blender.py"
