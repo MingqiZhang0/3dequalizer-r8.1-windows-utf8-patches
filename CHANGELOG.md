@@ -18,11 +18,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - `UTF8_Patch_Manager.py` toolkit root resolution: now automatically
-  searches common locations including the 3DE install folder and
-  recommended subdirectory names (`3de_utf8_patch_toolkit`,
-  `3dequalizer-r8.1-windows-utf8-patches`, etc.) before falling
-  back to `TOOLKIT_ROOT_OVERRIDE`. Root-not-found UI now shows
-  the recommended folder layout as the primary fix.
+  searches common locations including the 3DE install folder,
+  recommended subdirectory names (`Manual Patches`,
+  `3de_utf8_patch_toolkit`, `3dequalizer-r8.1-windows-utf8-patches`,
+  etc.), and one-level subdirectories under trusted base directories,
+  before falling back to `TOOLKIT_ROOT_OVERRIDE`.
+  Root-not-found UI now shows `Manual Patches` as an example layout.
 
 ### Planned
 

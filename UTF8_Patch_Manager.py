@@ -68,8 +68,12 @@ REQUIRED_TOOL_FILES = [
     "Cleanup_UTF8_Backups.py",
 ]
 
-# Recommended toolkit folder names (checked under 3DE install dir and its parent).
+# Known toolkit folder names (checked under 3DE install dir and its parent).
 COMMON_TOOLKIT_DIR_NAMES = [
+    "Manual Patches",
+    "manual patches",
+    "Manual_Patches",
+    "manual_patches",
     "3de_utf8_patch_toolkit",
     "3dequalizer-r8.1-windows-utf8-patches",
     "3dequalizer-r8.1-windows-utf8-patches-main",
@@ -117,6 +121,26 @@ def _add_dir(result, path):
         pass
 
 
+def _add_one_level_subdirs(result, base_dir):
+    """
+    Add all immediate subdirectories of *base_dir* as candidates.
+    Only one level deep — does not recurse.
+    Silently ignores permission errors and non-directories.
+    """
+    if not base_dir:
+        return
+    try:
+        base_dir = os.path.abspath(base_dir)
+        if not os.path.isdir(base_dir):
+            return
+        for name in os.listdir(base_dir):
+            path = os.path.join(base_dir, name)
+            if os.path.isdir(path):
+                _add_dir(result, path)
+    except Exception:
+        pass
+
+
 def collect_candidate_dirs():
     """
     Gather candidate directories to search for the toolkit root.
@@ -127,7 +151,8 @@ def collect_candidate_dirs():
       3. os.getcwd()
       4. 3DE install path + common subdirectory names
       5. Parent of 3DE install path + common subdirectory names
-      6. Parent directories of all current candidates (up to 4 levels)
+      6. One-level subdirectories under trusted base dirs
+      7. Parent directories of all current candidates (up to 4 levels)
     """
     result = {"dirs": [], "_seen": set()}
     add = lambda p: _add_dir(result, p)
@@ -137,16 +162,20 @@ def collect_candidate_dirs():
         add(TOOLKIT_ROOT_OVERRIDE.strip())
 
     # 2. __file__ directory
+    file_dir = ""
     try:
         this_file = globals().get("__file__", "")
         if this_file:
-            add(os.path.dirname(os.path.abspath(this_file)))
+            file_dir = os.path.dirname(os.path.abspath(this_file))
+            add(file_dir)
     except Exception:
         pass
 
     # 3. Current working directory
+    cwd = ""
     try:
-        add(os.getcwd())
+        cwd = os.getcwd()
+        add(cwd)
     except Exception:
         pass
 
@@ -168,11 +197,25 @@ def collect_candidate_dirs():
             pass
 
     for base in bases:
-        add(base)  # the install dir itself may contain the toolkit
+        add(base)
         for name in COMMON_TOOLKIT_DIR_NAMES:
             add(os.path.join(base, name))
 
-    # 6. Parent directories of all current candidates (up to 4 levels)
+    # 6. One-level subdirectories under trusted base dirs.
+    #    This catches folders like "Manual Patches" that sit directly
+    #    under the 3DE install path but are not in COMMON_TOOLKIT_DIR_NAMES.
+    trusted_scan_bases = []
+    if file_dir:
+        trusted_scan_bases.append(file_dir)
+    if cwd:
+        trusted_scan_bases.append(cwd)
+    for base in bases:
+        trusted_scan_bases.append(base)
+
+    for base in trusted_scan_bases:
+        _add_one_level_subdirs(result, base)
+
+    # 7. Parent directories of all current candidates (up to 4 levels)
     initial = list(result["dirs"])
     for c in initial:
         try:
@@ -238,6 +281,8 @@ def show_root_not_found_error(script_name, candidates):
     lines.append("  Put the whole patch toolkit folder under")
     lines.append("  your 3DE install folder, for example:")
     lines.append("")
+    lines.append("  %s\\Manual Patches\\" % install)
+    lines.append("  or")
     lines.append("  %s\\3de_utf8_patch_toolkit\\" % install)
     lines.append("")
     lines.append("Alternative:")
@@ -261,6 +306,8 @@ def show_root_not_found_error(script_name, candidates):
         print("  %s" % name)
     print("")
     print("Recommended layout:")
+    print("  %s\\Manual Patches\\" % install)
+    print("  or")
     print("  %s\\3de_utf8_patch_toolkit\\" % install)
     print("=" * 60)
 

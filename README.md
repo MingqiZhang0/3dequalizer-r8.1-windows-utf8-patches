@@ -282,11 +282,18 @@ If the manager cannot find the tool scripts, put the whole toolkit
 folder under your 3DEqualizer4 installation folder, for example:
 
 ```text
+<3DE install path>\Manual Patches\
+```
+
+or:
+
+```text
 <3DE install path>\3de_utf8_patch_toolkit\
 ```
 
 Keep all toolkit files together.  Do not copy only the manager
-script by itself.
+script by itself.  The manager searches one level of subdirectories
+under the 3DE install path automatically.
 
 If automatic search still fails, edit `TOOLKIT_ROOT_OVERRIDE` at
 the top of `UTF8_Patch_Manager.py` and set it to the toolkit folder.
