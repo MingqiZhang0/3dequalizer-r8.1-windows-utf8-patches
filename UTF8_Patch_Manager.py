@@ -401,38 +401,15 @@ def run_tool_script(name):
 def show_help():
     tde4.postQuestionRequester(
         "UTF-8 Patch Manager - Help",
-        "Recommended workflow:\n"
-        "\n"
-        "  Scan -> Backup -> Fix -> Scan\n"
-        "\n"
-        "Important notes:\n"
+        "Workflow: Scan -> Backup -> Fix -> Scan\n"
         "\n"
         "- Run inside 3DEqualizer4 only.\n"
-        "- Tested only with 3DEqualizer4 Release 8.1\n"
-        "  on Windows.\n"
-        "- Always make a full external backup of your\n"
-        "  3DE installation before patching.\n"
-        "- Backup tool is most useful before patching.\n"
-        "- Rollback needs .encoding_backup files to\n"
-        "  restore exporter source files.\n"
-        "- Cleanup deletes local .encoding_backup files\n"
-        "  and reduces rollback ability.\n"
-        "- After Fix or Undo, fully restart\n"
-        "  3DEqualizer4.\n"
-        "- Keep the downloaded toolkit folder name\n"
-        "  unchanged when possible.\n"
+        "- Tested only with 3DE4 Release 8.1 on Windows.\n"
+        "- Full external backup required before patching.\n"
+        "- Fix and Undo need restart afterwards.\n"
+        "- Keep toolkit folder name unchanged.\n"
         "\n"
-        "If the manager cannot find tool scripts:\n"
-        "\n"
-        "1. Put the whole toolkit folder under your\n"
-        "   3DE install folder:\n"
-        "   <3DE install>\\3de_utf8_patch_toolkit\\\n"
-        "\n"
-        "2. Or set TOOLKIT_ROOT_OVERRIDE at the top\n"
-        "   of UTF8_Patch_Manager.py.\n"
-        "\n"
-        "See README.md and docs/Potential_Risks.md\n"
-        "for details.",
+        "See README.md and docs/Potential_Risks.md.",
         "Ok",
     )
 
