@@ -68,6 +68,11 @@ REQUIRED_TOOL_FILES = [
     "Cleanup_UTF8_Backups.py",
 ]
 
+# Base repository name -- used to generate versioned folder name variants.
+# When bumping the toolkit version, add the new tag suffix below.
+_TOOLKIT_REPO_BASE = "3dequalizer-r8.1-windows-utf8-patches"
+_TOOLKIT_VERSION_TAGS = ["", "-main", "-master", "-0.3.0", "-0.2.0", "-0.1.0"]
+
 # Known toolkit folder names (checked under 3DE install dir and its parent).
 COMMON_TOOLKIT_DIR_NAMES = [
     "Manual Patches",
@@ -75,10 +80,7 @@ COMMON_TOOLKIT_DIR_NAMES = [
     "Manual_Patches",
     "manual_patches",
     "3de_utf8_patch_toolkit",
-    "3dequalizer-r8.1-windows-utf8-patches",
-    "3dequalizer-r8.1-windows-utf8-patches-main",
-    "3dequalizer-r8.1-windows-utf8-patches-master",
-]
+] + [_TOOLKIT_REPO_BASE + tag for tag in _TOOLKIT_VERSION_TAGS]
 
 TOOL_SCRIPTS = {
     "scan":     "Scan_Exporters_UTF8_Status.py",
