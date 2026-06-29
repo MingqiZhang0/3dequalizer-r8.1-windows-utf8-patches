@@ -14,8 +14,8 @@
 """
 Rollback_UTF8_Patches.py
 ========================
-Restores all changes made by Fix_Exporters_UTF8.py (and the legacy
-Fix_Blender_Export.py).
+Restores all changes made by Fix_Exporters_UTF8.py
+(and older legacy Blender-only helper runs).
 
 What it does:
   1. Finds all *.encoding_backup files under sys_data/py_scripts/

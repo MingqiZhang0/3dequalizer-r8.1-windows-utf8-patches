@@ -8,6 +8,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Planned
+
+- Future: document exact-match table maintenance and optional
+  expected-count validation.
+- Future: add partial-write regression tests using an unpatched
+  3DE4 R8.1 test copy.
+
+---
+
+## [0.4.0] - 2026-06-29
+
 ### Changed
 
 - Moved individual tool scripts into the `scripts/` folder while
@@ -28,13 +39,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Manual 3DE Manager smoke test passed on 3DEqualizer4 Release 8.1
   Windows Chinese/GBK environment: manager launches, finds toolkit
   root, starts all five tools from `scripts/`.
-
-### Planned
-
-- Future: document exact-match table maintenance and optional
-  expected-count validation.
-- Future: add partial-write regression tests using an unpatched
-  3DE4 R8.1 test copy.
 
 ---
 

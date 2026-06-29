@@ -105,17 +105,18 @@ Other 3DE versions and operating systems are **not** tested.
 
 1. Launch 3DEqualizer4 (right-click → **Run as administrator** if needed).
 2. Go to **Main Window → Python → Run Script…**
-3. Select **`Fix_Exporters_UTF8.py`** from this repository.
-4. Read the confirmation dialog carefully. It lists every file that
-   will be modified. Clicking **Proceed** means you confirm that you
-   have already made a full backup of your 3DEqualizer4 installation
-   folder. Click **Cancel** to abort.
-5. After the script completes and shows its report, **fully exit
+3. Select **`UTF8_Patch_Manager.py`** from the repository root.
+4. From the Manager main menu, choose **Tools → Fix**.
+5. Select patch scopes (default: all), confirm, then read the backup
+   warning carefully.  Click **Proceed** to apply or **Cancel** to abort.
+6. After the script completes and shows its report, **fully exit
    3DEqualizer4** (do NOT just use "Rescan Python Directories").
-6. Restart 3DEqualizer4 normally.
-7. Verify the exporter menus work:
+7. Restart 3DEqualizer4 normally.
+8. Verify the exporter menus work:
    - **Main Window → 3DE4 → Export Project → Blender…** (dialog should appear)
    - **Main Window → 3DE4 → Export Project → Maya…** (dialog should appear)
+
+Advanced users can run `scripts/Fix_Exporters_UTF8.py` directly.
 
 ### What NOT to Do
 
@@ -130,9 +131,12 @@ If something goes wrong, or you want to undo all changes:
 
 1. Launch 3DEqualizer4 (as Administrator if needed).
 2. Go to **Main Window → Python → Run Script…**
-3. Select **`Rollback_UTF8_Patches.py`** from this repository.
-4. Review the preview of files to be restored. Click **Proceed**.
-5. **Fully exit** 3DEqualizer4, then restart it.
+3. Select **`UTF8_Patch_Manager.py`** from the repository root.
+4. Choose **Tools → More → Undo**.
+5. Review the preview of files to be restored. Click **Proceed**.
+6. **Fully exit** 3DEqualizer4, then restart it.
+
+Advanced users can run `scripts/Rollback_UTF8_Patches.py` directly.
 
 The rollback script restores all `.encoding_backup` files and moves the
 disabled `export_blender.py` back to `py_scripts/`. It is **idempotent**
@@ -243,21 +247,20 @@ Validated manually on:
 - Windows 11 Home
 - Chinese locale / GBK default encoding
 
-Smoke test procedure:
+v0.4.0 Manager smoke test (manual):
 
-1. Run `Fix_Exporters_UTF8.py` inside 3DEqualizer4
+1. Run `UTF8_Patch_Manager.py` inside 3DEqualizer4
    (Main Window > Python > Run Script...).
-2. Confirm the requester opens and the **Cancel** path makes no changes.
-3. Apply the patch with **Proceed**.
-4. Confirm the legacy Blender script is moved to
-   `sys_data/py_scripts_disabled/export_blender.py.bak`.
-5. Confirm exporter patch points report `OK` or `already patched`.
-6. Fully restart 3DEqualizer4.
-7. Verify:
-   - `Main Window > 3DE4 > Export Project > Blender...` (dialog appears)
-   - `Main Window > 3DE4 > Export Project > Maya...` (dialog appears)
-8. Re-run `Fix_Exporters_UTF8.py` and confirm idempotency: every entry
-   reports `SKIP already patched`.
+2. Confirm main menu displays **UTF-8 Patch Manager v0.4.0**.
+3. Confirm **Toolkit root: FOUND**.
+4. Run **Scan** — scanner completes normally.
+5. Open **Tools → Backup**, confirm requester appears, **Cancel**.
+6. Open **Tools → Fix**, confirm scope selection appears, **Cancel**.
+7. Open **Tools → More → Undo**, confirm rollback preview appears,
+   **Cancel**.
+8. Open **Tools → More → Cleanup**, confirm warning appears, **Cancel**.
+9. Confirm no `script not found` / `FileNotFoundError` /
+   requester title mojibake.
 
 **Known limitation:** The patch is version-specific. The exact-match
 replacement table was built against a specific 3DEqualizer4 R8.1 build.
@@ -272,11 +275,12 @@ this occurs.
 | `docs/Fix_README.md` | Detailed fix notes — root causes, symptoms, rollback |
 | `docs/Potential_Risks.md` | Original R8.1 audit findings and patch-related safety notes |
 | `CHANGELOG.md` | Version history (Keep a Changelog format) |
+| `docs/RELEASE_NOTES_v0.4.0.md` | v0.4.0 GitHub Release notes |
 | `docs/RELEASE_NOTES_v0.3.0.md` | v0.3.0 GitHub Release notes |
 | `docs/RELEASE_NOTES_v0.2.0.md` | v0.2.0 GitHub Release notes |
 | `docs/RELEASE_NOTES_v0.1.0.md` | v0.1.0 GitHub Release notes |
 
-## Unreleased (v0.3.0-dev)
+## Manager Toolkit Folder Notes
 
 `UTF8_Patch_Manager.py` is a unified launcher (main menu: Scan |
 Tools | Help | Cancel).  Run it inside 3DEqualizer4 instead of

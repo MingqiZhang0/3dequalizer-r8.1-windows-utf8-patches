@@ -130,7 +130,16 @@ default.  Advanced users can patch only specific exporters.
 ## Rollback
 
 All modified files have backup copies saved with suffix `.encoding_backup` in the same directory.
-To undo:
+
+Recommended rollback path:
+
+1. Run `UTF8_Patch_Manager.py` inside 3DEqualizer4.
+2. Choose **Tools → More → Undo**.
+3. Review the preview.
+4. Click **Proceed** only if you want to restore backups.
+5. Fully restart 3DEqualizer4.
+
+Manual emergency fallback:
 
 1. Copy each `.encoding_backup` file back to the original `.py` filename
 2. Move `export_blender.py.bak` from `py_scripts_disabled/` back to `py_scripts/` and rename to `export_blender.py`
