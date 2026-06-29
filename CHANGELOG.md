@@ -18,6 +18,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - `Probe_Unicode_Paths.py` Paste mode - allows pasting a Unicode
   folder/file path directly when the native 3DE file requester
   fails on Chinese paths.
+- `Probe_Unicode_Paths.py` Clipboard mode - reads Unicode paths
+  from the Windows clipboard via `CF_UNICODETEXT` (ctypes), bypassing
+  3DE requester text/path conversion issues entirely.
 
 ### Changed
 
