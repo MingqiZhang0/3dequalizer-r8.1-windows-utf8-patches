@@ -394,23 +394,123 @@ def scan_backups(py_scripts):
     return lines, found
 
 
-def build_summary(version_string, version_ok, blender_lines, patch_counts, backup_count,
-                  existence_errors):
-    """Build the final summary and recommended action."""
+def build_full_report(version_string, compat_label, blender_lines, existence_lines,
+                      patch_lines, backup_lines, summary_text):
+    """Assemble the complete detailed report for console output."""
+    lines = []
+    lines.append("=" * 60)
+    lines.append("Scan Exporters UTF-8 Patch Status")
+    lines.append("=" * 60)
+    lines.append("")
+    lines.append("Detected 3DE version:")
+    lines.append("  %s" % version_string)
+    lines.append("")
+    lines.append("Patch compatibility:")
+    lines.append("  %s" % compat_label)
+    lines.append("")
+    lines.append("Note: this scanner is read-only.")
+    lines.append("The patcher should only be applied to 3DEqualizer4 Release 8.1.")
+    lines.append("")
+    lines.append("-" * 60)
+    lines.append("Blender Legacy Script Status:")
+    lines.extend(blender_lines)
+    lines.append("")
+    lines.append("-" * 60)
+    lines.append("Target File Existence:")
+    lines.extend(existence_lines)
+    lines.append("")
+    lines.append("-" * 60)
+    lines.append("Patch Point Status:")
+    lines.extend(patch_lines)
+    lines.append("")
+    lines.append("-" * 60)
+    lines.append("Backup File Status:")
+    lines.extend(backup_lines)
+    lines.append("")
+    lines.append("-" * 60)
+    lines.append(summary_text)
+    lines.append("=" * 60)
+    return "\n".join(lines)
+
+
+def build_short_summary(version_string, version_ok, blender_status_short, patch_status_short,
+                        patch_counts, backup_count, existence_errors, issue_count):
+    """Build a compact popup summary (max ~15 lines for requester)."""
     compat = "SUPPORTED" if version_ok else ("UNSUPPORTED" if version_string != "UNKNOWN" else "UNKNOWN")
 
-    # Determine overall patch status
+    if issue_count > 0:
+        issues_line = "\nIssues found:\n  %d\n" % issue_count
+        if patch_status_short == "PARTIALLY PATCHED":
+            action = ("Check console details.\n"
+                      "Re-run Fix_Exporters_UTF8.py if version is supported.")
+        elif existence_errors > 0:
+            action = "Check console details. Missing target files detected."
+        else:
+            action = "Check console details."
+    elif patch_status_short == "FULLY PATCHED":
+        issues_line = ""
+        action = "No action needed."
+    elif patch_status_short == "NOT PATCHED":
+        issues_line = ""
+        action = "Run Fix_Exporters_UTF8.py to apply the patch." if version_ok else "Unsupported version. Do NOT run the patcher."
+    else:
+        issues_line = "\nIssues found:\n  %d\n" % issue_count
+        action = "Check console details."
+
+    summary = (
+        "Scan complete.\n"
+        "\n"
+        "Detected 3DE version:\n"
+        "  %s\n"
+        "\n"
+        "Compatibility:\n"
+        "  %s\n"
+        "\n"
+        "Blender legacy:\n"
+        "  %s\n"
+        "\n"
+        "Patch status:\n"
+        "  %s (%d/%d entries patched)\n"
+        "%s"
+        "\n"
+        "Backups found:\n"
+        "  %d\n"
+        "\n"
+        "Files missing:\n"
+        "  %d\n"
+        "\n"
+        "Recommended action:\n"
+        "  %s\n"
+        "\n"
+        "Full details were printed to the 3DE Python console."
+    ) % (
+        version_string,
+        compat,
+        blender_status_short,
+        patch_status_short, patch_counts.get("patched", 0), patch_counts.get("expected", 0),
+        issues_line,
+        backup_count,
+        existence_errors,
+        action,
+    )
+    return summary
+
+
+def build_summary(version_string, version_ok, blender_lines, patch_counts,
+                  backup_count, existence_errors):
+    """Build the detailed summary block for the full console report."""
+    compat = "SUPPORTED" if version_ok else ("UNSUPPORTED" if version_string != "UNKNOWN" else "UNKNOWN")
+
     pc = patch_counts
     if pc["patched"] == pc["expected"] and pc["unpatched"] == 0 and pc["partial"] == 0 and pc["unknown"] == 0:
         patch_status = "FULLY PATCHED"
     elif pc["patched"] == 0 and pc["unpatched"] == pc["expected"] and pc["partial"] == 0 and pc["unknown"] == 0:
         patch_status = "NOT PATCHED"
-    elif pc["patched"] > 0 and pc["unpatched"] > 0 or pc["partial"] > 0:
+    elif pc["patched"] > 0 and (pc["unpatched"] > 0 or pc["partial"] > 0):
         patch_status = "PARTIALLY PATCHED"
     else:
         patch_status = "UNKNOWN"
 
-    # Determine Blender legacy status
     has_active_warn = any("still active" in l for l in blender_lines)
     has_disabled_ok = any("legacy script disabled" in l for l in blender_lines)
     if has_disabled_ok and not has_active_warn:
@@ -420,7 +520,6 @@ def build_summary(version_string, version_ok, blender_lines, patch_counts, backu
     else:
         blender_status = "UNKNOWN"
 
-    # Recommended action
     if patch_status == "FULLY PATCHED" and blender_status.startswith("YES"):
         action = "No action needed. Your installation is fully patched."
     elif not version_ok:
@@ -432,7 +531,7 @@ def build_summary(version_string, version_ok, blender_lines, patch_counts, backu
     else:
         action = "Run Fix_Exporters_UTF8.py if on R8.1. Use Rollback_UTF8_Patches.py to undo."
 
-    summary = (
+    return (
         "Summary:\n"
         "  3DE version: %s\n"
         "  Compatibility: %s\n"
@@ -452,7 +551,6 @@ def build_summary(version_string, version_ok, blender_lines, patch_counts, backu
         existence_errors,
         action,
     )
-    return summary
 
 
 # ---------------------------------------------------------------------------
@@ -465,67 +563,63 @@ def main():
     version_ok = is_supported_3de_version(version_string)
     compat_label = "SUPPORTED" if version_ok else ("UNSUPPORTED" if version_string != "UNKNOWN" else "UNKNOWN")
 
-    report = []
-
-    # --- Header ---
-    report.append("Scan Exporters UTF-8 Patch Status")
-    report.append("=" * 40)
-    report.append("")
-    report.append("Detected 3DE version:")
-    report.append("  %s" % version_string)
-    report.append("")
-    report.append("Patch compatibility:")
-    report.append("  %s" % compat_label)
-    report.append("")
-    report.append("Note:")
-    report.append("  This scanner is read-only.")
-    report.append("  The patcher should only be applied to")
-    report.append("  3DEqualizer4 Release 8.1.")
-    report.append("")
-
     # --- Blender legacy ---
-    report.append("-" * 40)
-    report.append("Blender Legacy Script Status:")
     blender_lines = scan_blender_legacy(py_scripts)
-    report.extend(blender_lines)
-    report.append("")
 
     # --- File existence ---
-    report.append("-" * 40)
-    report.append("Target File Existence:")
     existence_lines = scan_file_existence(py_scripts)
-    report.extend(existence_lines)
     existence_errors = sum(1 for l in existence_lines if l.startswith("[ERROR]"))
-    report.append("")
 
     # --- Patch points ---
-    report.append("-" * 40)
-    report.append("Patch Point Status:")
     if existence_errors == len(TARGET_FILES):
-        report.append("[ERROR] All target files missing - cannot scan patch points.")
+        patch_lines = ["[ERROR] All target files missing - cannot scan patch points."]
         patch_counts = {"patched": 0, "unpatched": 0, "partial": 0, "unknown": 0, "expected": 0}
     else:
         patch_lines, patch_counts = scan_patch_points(py_scripts)
-        report.extend(patch_lines)
-    report.append("")
 
     # --- Backups ---
-    report.append("-" * 40)
-    report.append("Backup File Status:")
     backup_lines, backup_count = scan_backups(py_scripts)
-    report.extend(backup_lines)
-    report.append("")
 
-    # --- Summary ---
-    report.append("-" * 40)
-    summary = build_summary(version_string, version_ok, blender_lines,
-                            patch_counts, backup_count, existence_errors)
-    report.append(summary)
+    # --- Determine short status labels ---
+    has_active_warn = any("still active" in l for l in blender_lines)
+    has_disabled_ok = any("legacy script disabled" in l for l in blender_lines)
+    if has_disabled_ok and not has_active_warn:
+        blender_status_short = "DISABLED"
+    elif has_active_warn:
+        blender_status_short = "ACTIVE (collision risk)"
+    else:
+        blender_status_short = "UNKNOWN"
 
-    # --- Display ---
+    pc = patch_counts
+    if pc["patched"] == pc["expected"] and pc["unpatched"] == 0 and pc["partial"] == 0 and pc["unknown"] == 0:
+        patch_status_short = "FULLY PATCHED"
+    elif pc["patched"] == 0 and pc["unpatched"] == pc["expected"] and pc["partial"] == 0 and pc["unknown"] == 0:
+        patch_status_short = "NOT PATCHED"
+    elif pc["patched"] > 0 and (pc["unpatched"] > 0 or pc["partial"] > 0):
+        patch_status_short = "PARTIALLY PATCHED"
+    else:
+        patch_status_short = "UNKNOWN"
+
+    issue_count = pc["unpatched"] + pc["partial"] + pc["unknown"] + existence_errors
+
+    # --- Build full report for console ---
+    summary_text = build_summary(version_string, version_ok, blender_lines,
+                                 patch_counts, backup_count, existence_errors)
+    full_report = build_full_report(version_string, compat_label, blender_lines,
+                                    existence_lines, patch_lines, backup_lines,
+                                    summary_text)
+
+    # --- Print full report to 3DE Python console ---
+    print(full_report)
+
+    # --- Show short summary in popup ---
+    short_summary = build_short_summary(version_string, version_ok, blender_status_short,
+                                        patch_status_short, patch_counts, backup_count,
+                                        existence_errors, issue_count)
+
     tde4.postQuestionRequester(
         "Scan Exporters UTF-8 Status - Done",
-        "\n".join(report),
+        short_summary,
         "Ok",
     )
 
