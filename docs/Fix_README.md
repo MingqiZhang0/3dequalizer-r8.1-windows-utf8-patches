@@ -95,13 +95,14 @@ Affected files in the `sys_data/py_scripts/` directory.
 Run the companion script **inside 3DEqualizer4**:
 
 ```
-Main Window > Python > Run Script... → Select Fix_Exporters_UTF8.py
+Main Window > Python > Run Script... -> Select Fix_Exporters_UTF8.py
 ```
 
 Then **fully restart 3DE4** (do NOT just use `tde4.rescanPythonDirs()`).
 
-> **Note:** `Fix_Blender_Export.py` is a legacy Blender-only helper kept for
-> reference. It is superseded by `Fix_Exporters_UTF8.py`. Do not use it as
+> **Note:** [`../legacy/Fix_Blender_Export.py`](../legacy/Fix_Blender_Export.py)
+> is a legacy Blender-only helper kept for reference. It is superseded by
+> [`../Fix_Exporters_UTF8.py`](../Fix_Exporters_UTF8.py). Do not use it as
 > the default entry point.
 
 ## Rollback

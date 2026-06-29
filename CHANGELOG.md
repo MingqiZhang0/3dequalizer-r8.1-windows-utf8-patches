@@ -95,6 +95,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   does not delete disabled Blender legacy backups.
 - Scanner wording updated from "Backups found" to "Backup files found".
 
+### Changed
+- Light repository layout cleanup:
+  - kept runnable tools in the repository root for easier use from
+    3DEqualizer4 `Run Script...`;
+  - moved detailed documentation to `docs/`;
+  - moved legacy Blender-only helper to `legacy/`.
+
 ### Planned
 - Directory restructuring (`scripts/`, `legacy/`, `docs/`).
 - `errors='replace'` risk documentation in `Potential_Risks.md`.

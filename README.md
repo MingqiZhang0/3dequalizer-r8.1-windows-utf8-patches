@@ -20,8 +20,8 @@
 >   undecodable bytes with `U+FFFD` (�). For user-data paths (e.g., the
 >   Piggyback Camera calibration import), we intentionally use strict UTF-8
 >   mode **without** `errors='replace'` so bad data raises a visible error.
-> - See [Potential_Risks.md](Potential_Risks.md) for a full audit of known
->   issues in the R8.1 codebase.
+> - See [docs/Potential_Risks.md](docs/Potential_Risks.md) for a full audit
+>   of known issues in the R8.1 codebase.
 
 Manual compatibility patches for 3DEqualizer4 R8.1 exporters on Chinese Windows locale.
 
@@ -54,7 +54,22 @@ This repository addresses two issues with 3DEqualizer4 R8.1 on Chinese Windows
 | `Rollback_UTF8_Patches.py` | **Rollback** — restores all `.encoding_backup` files and moves the disabled `export_blender.py` back. | ↩ Use if needed |
 | `Scan_Exporters_UTF8_Status.py` | **Read-only scanner** — checks current patch status, version compatibility, Blender legacy script state, and backup files. Does not modify files. | 🔍 Optional preflight / diagnosis |
 | `Cleanup_UTF8_Backups.py` | **Optional cleanup** — deletes known `.encoding_backup` files after the patch has been verified and an external backup exists. Does **not** delete the disabled Blender legacy backup. | ⚠️ Optional, use with caution |
-| `Fix_Blender_Export.py` | **Legacy / Blender-only helper** — Blender fix only. Superseded by `Fix_Exporters_UTF8.py`. Kept for reference. | ⛔ Do not use as default entry point |
+| `legacy/Fix_Blender_Export.py` | **Legacy / Blender-only helper** — Blender fix only. Superseded by `Fix_Exporters_UTF8.py`. Kept for reference. | Do not use as default entry point |
+
+## Repository Layout
+
+The four runnable tools are intentionally kept in the repository root
+so users can easily select them from 3DEqualizer4's
+`Main Window > Python > Run Script...` dialog:
+
+- `Fix_Exporters_UTF8.py`
+- `Rollback_UTF8_Patches.py`
+- `Scan_Exporters_UTF8_Status.py`
+- `Cleanup_UTF8_Backups.py`
+
+Detailed documentation is under `docs/`.
+
+Legacy helper scripts are under `legacy/`.
 
 ## Tested Environment
 
@@ -218,10 +233,10 @@ this occurs.
 
 | File | Content |
 |------|---------|
-| `Fix_README.md` | Detailed fix notes — root causes, symptoms, rollback |
-| `Potential_Risks.md` | Audit findings — ~200 items catalogued, not yet patched |
+| `docs/Fix_README.md` | Detailed fix notes — root causes, symptoms, rollback |
+| `docs/Potential_Risks.md` | Audit findings — ~200 items catalogued, not yet patched |
 | `CHANGELOG.md` | Version history (Keep a Changelog format) |
-| `RELEASE_NOTES_v0.1.0.md` | v0.1.0 GitHub Release notes |
+| `docs/RELEASE_NOTES_v0.1.0.md` | v0.1.0 GitHub Release notes |
 
 ## Development Note
 
