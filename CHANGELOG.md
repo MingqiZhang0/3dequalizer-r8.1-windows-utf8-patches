@@ -15,6 +15,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   R8.1 on Windows.  Reports Python encoding settings, path
   accessibility, listdir visibility, native requester behavior,
   and a diagnostic classification (Case A/B/C/D).
+- `Probe_Unicode_Paths.py` Paste mode - allows pasting a Unicode
+  folder/file path directly when the native 3DE file requester
+  fails on Chinese paths.
 
 ### Changed
 
@@ -26,6 +29,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - `Probe_Unicode_Paths.py` no longer reports Case B when the user
   selects Skip / environment-only diagnostics without a test path.
+- File requester UnicodeDecodeError is now reported as "Requester
+  path selection failed" instead of being confused with Python
+  filesystem access failure.
 
 ### Planned
 

@@ -28,6 +28,7 @@ Reports:
 import os
 import sys
 import locale
+import traceback
 import tde4
 
 
@@ -253,12 +254,37 @@ def probe_native_requester_return(test_path):
     return lines
 
 
-def classify(env_lines, path_lines, test_path):
+def classify(env_lines, path_lines, test_path, path_source):
     """Classify the issue based on probe results."""
     lines = []
     lines.append("-" * 60)
     lines.append("Diagnostic Classification")
     lines.append("-" * 60)
+
+    # Requester itself failed before obtaining a path
+    if path_source == "File requester failed":
+        lines.append("RESULT: Requester path selection failed")
+        lines.append("")
+        lines.append("The native 3DE file requester failed before a")
+        lines.append("path could be tested.  This suggests a native")
+        lines.append("requester / path conversion limitation.")
+        lines.append("")
+        lines.append("Use Paste mode to test whether Python can")
+        lines.append("access the same path directly.")
+        lines.append("")
+        lines.append("Note: Case A (native 3DE UI / requester display")
+        lines.append("limitation) can only be confirmed by visual")
+        lines.append("inspection of the requester window.")
+        return lines
+
+    if path_source == "Paste path failed":
+        lines.append("RESULT: Paste path failed")
+        lines.append("")
+        lines.append("The paste path requester could not obtain a")
+        lines.append("valid path string.")
+        lines.append("")
+        lines.append("Check the console for error details.")
+        return lines
 
     # No test path selected - environment-only run
     if not test_path:
@@ -267,8 +293,8 @@ def classify(env_lines, path_lines, test_path):
         lines.append("No Unicode test path was selected.")
         lines.append("Path-specific classification was not performed.")
         lines.append("")
-        lines.append("Use File mode to select any file inside a Chinese")
-        lines.append("folder, or set TEST_UNICODE_PATH as a fallback.")
+        lines.append("Use File or Paste mode to test a Chinese folder,")
+        lines.append("or set TEST_UNICODE_PATH as a fallback.")
         lines.append("")
         lines.append("Note: Case A (native 3DE UI / requester display")
         lines.append("limitation) can only be confirmed by visual")
@@ -318,23 +344,53 @@ def classify(env_lines, path_lines, test_path):
 
 
 # ---------------------------------------------------------------------------
+# Path helpers
+# ---------------------------------------------------------------------------
+def normalize_user_path(raw_path):
+    """Strip quotes, whitespace, expand env vars and ~."""
+    if raw_path is None:
+        return ""
+    path = raw_path.strip()
+    if len(path) >= 2:
+        if (path[0] == '"' and path[-1] == '"') or \
+           (path[0] == "'" and path[-1] == "'"):
+            path = path[1:-1]
+    path = path.strip()
+    try:
+        path = os.path.expandvars(path)
+        path = os.path.expanduser(path)
+    except Exception:
+        pass
+    return path
+
+
+def path_to_test_folder(path):
+    """
+    Normalize *path* and return the folder to test.
+    If *path* is a directory, return it directly.
+    If *path* is a file, return its parent directory.
+    Otherwise return *path* as-is for diagnostics.
+    Returns (folder_path, error_message).
+    """
+    path = normalize_user_path(path)
+    if not path:
+        return "", "Empty path"
+    try:
+        if os.path.isdir(path):
+            return path, None
+        if os.path.isfile(path):
+            return os.path.dirname(path), None
+        # Doesn't exist - still return for diagnostics
+        return path, "Path does not exist according to os.path"
+    except Exception as exc:
+        return path, str(exc)
+
+
+# ---------------------------------------------------------------------------
 # Interactive path selection
 # ---------------------------------------------------------------------------
-def ask_directory_path():
-    """Try the native directory requester.  Returns (path, error_string)."""
-    if not hasattr(tde4, "postDirectoryRequester"):
-        return None, "postDirectoryRequester not available"
-    try:
-        path = tde4.postDirectoryRequester("Select Unicode Test Folder", "")
-        if path:
-            return path, None
-        return None, "No folder selected"
-    except Exception as e:
-        return None, str(e)
-
-
 def ask_file_parent_path():
-    """Use file requester, then return the parent folder.  Returns (path, error_string)."""
+    """Use file requester, then return the parent folder."""
     if not hasattr(tde4, "postFileRequester"):
         return None, "postFileRequester not available"
     try:
@@ -346,7 +402,6 @@ def ask_file_parent_path():
         )
         if not selected:
             return None, "No file selected"
-        # postFileRequester may return a list for multi-selection
         if isinstance(selected, (list, tuple)):
             selected = selected[0] if selected else ""
         parent = os.path.dirname(selected)
@@ -357,34 +412,57 @@ def ask_file_parent_path():
         return None, str(e)
 
 
+def ask_pasted_path():
+    """Let the user paste a full path.  Returns (raw_path, error_string)."""
+    if not hasattr(tde4, "createCustomRequester"):
+        return None, "createCustomRequester not available"
+    try:
+        req = tde4.createCustomRequester()
+        tde4.addTextFieldWidget(req, "path", "Path", "")
+        ret = tde4.postCustomRequester(
+            req,
+            "Paste Unicode Path",
+            800, 120,
+            "Continue", "Cancel",
+        )
+        if ret != 1:
+            tde4.deleteCustomRequester(req)
+            return None, "User cancelled paste path"
+        path = tde4.getWidgetValue(req, "path")
+        tde4.deleteCustomRequester(req)
+        if not path or not path.strip():
+            return None, "Empty path"
+        return path.strip(), None
+    except Exception as exc:
+        traceback.print_exc()
+        return None, str(exc)
+
+
 def interactive_select_path():
     """
     Let the user pick a test path interactively.
-    Returns (test_path, path_source, error_message).
-    path_source is one of: "TEST_UNICODE_PATH", "Directory requester",
-    "File requester parent folder", "Skip", "Cancelled", "Error".
+    Returns (test_folder_path, path_source, error_message).
     """
     # If hardcoded path is set, use it directly
     if TEST_UNICODE_PATH.strip():
         return TEST_UNICODE_PATH.strip(), "TEST_UNICODE_PATH", None
 
-    # Interactive selection
     r = tde4.postQuestionRequester(
         "Probe Unicode Paths",
         "Choose how to select a Unicode path test target.\n"
         "\n"
-        "Folder:\n"
-        "  Select a folder directly, if supported\n"
-        "  by this 3DE build.\n"
-        "\n"
         "File:\n"
         "  Select any file inside the target folder.\n"
-        "  The probe will test that file's parent\n"
-        "  folder.\n"
+        "  This may fail if 3DE cannot decode Chinese\n"
+        "  paths.\n"
+        "\n"
+        "Paste:\n"
+        "  Paste a full folder path or file path.\n"
+        "  This avoids the native file requester.\n"
         "\n"
         "Skip:\n"
         "  Run environment checks only.",
-        "Folder", "File", "Skip", "Cancel",
+        "File", "Paste", "Skip", "Cancel",
     )
 
     if r == 4 or r < 1:
@@ -394,38 +472,19 @@ def interactive_select_path():
         return "", "Skip", "User chose environment checks only"
 
     if r == 1:
-        # Folder
-        path, err = ask_directory_path()
+        # File mode
+        path, err = ask_file_parent_path()
         if path:
-            return path, "Directory requester", None
-        # Directory requester failed or unavailable - offer File fallback
-        if err:
-            print("[INFO] Directory requester: %s" % err)
-        r2 = tde4.postQuestionRequester(
-            "Probe Unicode Paths",
-            "Directory requester is not available or failed.\n"
-            "\n"
-            "Please use File mode:\n"
-            "select any file inside the target folder.\n"
-            "\n"
-            "The probe will test the selected file's\n"
-            "parent folder.",
-            "File", "Skip", "Cancel",
-        )
-        if r2 == 1:
-            path, err2 = ask_file_parent_path()
-            if path:
-                return path, "File requester parent folder (dir fallback)", None
-            return "", "Error", err2 or "File requester failed"
-        if r2 == 2:
-            return "", "Skip", "User chose environment checks only"
-        return "", "Cancelled", "User cancelled"
+            return path, "File requester parent folder", None
+        # File requester failed - record as requester failure
+        return "", "File requester failed", err or "File requester returned no path"
 
-    # r == 2: File
-    path, err = ask_file_parent_path()
-    if path:
-        return path, "File requester parent folder", None
-    return "", "Error", err or "File requester failed"
+    # r == 2: Paste mode
+    raw, err = ask_pasted_path()
+    if err:
+        return "", "Paste path failed", err
+    folder, err2 = path_to_test_folder(raw)
+    return folder, "Paste path", err2  # err2 may be None (success) or a diagnostic message
 
 
 # ---------------------------------------------------------------------------
@@ -495,7 +554,7 @@ def main():
         report.append("")
 
     # 5. Classification
-    class_lines = classify(env_lines, path_lines, test_path)
+    class_lines = classify(env_lines, path_lines, test_path, path_source)
     report.extend(class_lines)
     report.append("")
     report.append("=" * 60)
@@ -504,7 +563,19 @@ def main():
     print(full_report)
 
     # Short popup
-    if test_path:
+    if path_source == "File requester failed":
+        popup_text = (
+            "File requester failed.\n"
+            "\n"
+            "The native 3DE file requester could not\n"
+            "return a Chinese path.\n"
+            "\n"
+            "Use Paste mode to test the same path\n"
+            "without the native requester.\n"
+            "\n"
+            "Full report printed to console."
+        )
+    elif test_path:
         path_status = safe_repr(test_path)
         if len(path_status) > 60:
             path_status = path_status[:57] + "..."
@@ -522,7 +593,8 @@ def main():
             "Environment check completed.\n"
             "\n"
             "No Unicode path was selected.\n"
-            "Use File mode to test a Chinese folder.\n"
+            "Use File or Paste mode to test a Chinese\n"
+            "folder.\n"
             "\n"
             "Full report printed to console."
         )
