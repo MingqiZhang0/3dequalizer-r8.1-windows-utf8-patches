@@ -32,11 +32,10 @@ import tde4
 
 
 # ---------------------------------------------------------------------------
-# Fallback test path.
-# Normally, run the probe and select a folder or file interactively.
-# Set this only if 3DE requesters are unavailable.
+# Optional test path - set this to a folder containing Chinese characters.
 # Example:
 #   TEST_UNICODE_PATH = r"F:\测试目录"
+# Leave empty to skip path-specific tests.
 # ---------------------------------------------------------------------------
 TEST_UNICODE_PATH = ""
 
@@ -213,7 +212,6 @@ def probe_tde4_api():
     lines.append("-" * 60)
 
     apis = [
-        "postDirectoryRequester",
         "postFileRequester",
         "postQuestionRequester",
         "postCustomRequester",
@@ -226,23 +224,61 @@ def probe_tde4_api():
     return lines
 
 
-def probe_native_requester_return(test_path):
+def probe_native_requester():
     """
-    Check a path that was already obtained from a native 3DE requester
-    for mojibake and accessibility issues.
+    Optional: let user pick a file/folder via native 3DE requester
+    and check the returned path.
     """
     lines = []
     lines.append("-" * 60)
-    lines.append("Requester Return-Value Check")
+    lines.append("Native Requester Test")
     lines.append("-" * 60)
 
-    if not test_path:
-        lines.append("(no requester path to check)")
+    if not hasattr(tde4, "postFileRequester"):
+        lines.append("postFileRequester not available - skipping.")
         return lines
 
-    lines.append("Return repr:      %s" % safe_repr(test_path))
-    lines.append("os.path.exists:   %s" % os.path.exists(test_path))
-    lines.append("Mojibake detected: %s" % has_mojibake(test_path))
+    # Ask if user wants to test
+    r = tde4.postQuestionRequester(
+        "Probe Unicode Paths",
+        "Optional: test native 3DE file requester?\n"
+        "\n"
+        "A file picker will open.\n"
+        "Select a file or folder with a Chinese name\n"
+        "if available.\n"
+        "\n"
+        "No files will be opened or modified.",
+        "Test", "Skip",
+    )
+
+    if r != 1:
+        lines.append("Native requester test skipped by user.")
+        return lines
+
+    try:
+        result = tde4.postFileRequester(
+            "Select a Chinese-named file or folder",
+            "*",
+            "",
+            0,
+        )
+
+        lines.append("Return type:      %s" % type(result).__name__)
+        lines.append("Return repr:      %s" % safe_repr(result))
+
+        if isinstance(result, str) and result:
+            lines.append("os.path.exists:   %s" % os.path.exists(result))
+            lines.append("Mojibake detected: %s" % has_mojibake(result))
+        elif isinstance(result, (list, tuple)) and result:
+            for i, p in enumerate(result[:5]):
+                lines.append("Path %d:           %s" % (i, safe_repr(p)))
+                lines.append("  exists:          %s" % os.path.exists(p))
+                lines.append("  mojibake:        %s" % has_mojibake(p))
+        else:
+            lines.append("(no path returned or cancelled)")
+
+    except Exception as e:
+        lines.append("postFileRequester error: %s" % str(e))
 
     return lines
 
@@ -300,159 +336,13 @@ def classify(env_lines, path_lines):
 
 
 # ---------------------------------------------------------------------------
-# Interactive path selection
-# ---------------------------------------------------------------------------
-def ask_directory_path():
-    """Try the native directory requester.  Returns (path, error_string)."""
-    if not hasattr(tde4, "postDirectoryRequester"):
-        return None, "postDirectoryRequester not available"
-    try:
-        path = tde4.postDirectoryRequester("Select Unicode Test Folder", "")
-        if path:
-            return path, None
-        return None, "No folder selected"
-    except Exception as e:
-        return None, str(e)
-
-
-def ask_file_parent_path():
-    """Use file requester, then return the parent folder.  Returns (path, error_string)."""
-    if not hasattr(tde4, "postFileRequester"):
-        return None, "postFileRequester not available"
-    try:
-        selected = tde4.postFileRequester(
-            "Select any file inside the target folder",
-            "*",
-            "",
-            0,
-        )
-        if not selected:
-            return None, "No file selected"
-        # postFileRequester may return a list for multi-selection
-        if isinstance(selected, (list, tuple)):
-            selected = selected[0] if selected else ""
-        parent = os.path.dirname(selected)
-        if parent:
-            return parent, None
-        return None, "Could not determine parent folder"
-    except Exception as e:
-        return None, str(e)
-
-
-def interactive_select_path():
-    """
-    Let the user pick a test path interactively.
-    Returns (test_path, path_source, error_message).
-    path_source is one of: "TEST_UNICODE_PATH", "Directory requester",
-    "File requester parent folder", "Skip", "Cancelled", "Error".
-    """
-    # If hardcoded path is set, use it directly
-    if TEST_UNICODE_PATH.strip():
-        return TEST_UNICODE_PATH.strip(), "TEST_UNICODE_PATH", None
-
-    # Interactive selection
-    r = tde4.postQuestionRequester(
-        "Probe Unicode Paths",
-        "Choose how to select a Unicode path test target.\n"
-        "\n"
-        "Folder:\n"
-        "  Select a folder directly, if supported\n"
-        "  by this 3DE build.\n"
-        "\n"
-        "File:\n"
-        "  Select any file inside the target folder.\n"
-        "  The probe will test that file's parent\n"
-        "  folder.\n"
-        "\n"
-        "Skip:\n"
-        "  Run environment checks only.",
-        "Folder", "File", "Skip", "Cancel",
-    )
-
-    if r == 4 or r < 1:
-        return "", "Cancelled", "User cancelled"
-
-    if r == 3:
-        return "", "Skip", "User chose environment checks only"
-
-    if r == 1:
-        # Folder
-        path, err = ask_directory_path()
-        if path:
-            return path, "Directory requester", None
-        # Directory requester failed or unavailable - offer File fallback
-        if err:
-            print("[INFO] Directory requester: %s" % err)
-        r2 = tde4.postQuestionRequester(
-            "Probe Unicode Paths",
-            "Directory requester is not available or failed.\n"
-            "\n"
-            "Please use File mode:\n"
-            "select any file inside the target folder.\n"
-            "\n"
-            "The probe will test the selected file's\n"
-            "parent folder.",
-            "File", "Skip", "Cancel",
-        )
-        if r2 == 1:
-            path, err2 = ask_file_parent_path()
-            if path:
-                return path, "File requester parent folder (dir fallback)", None
-            return "", "Error", err2 or "File requester failed"
-        if r2 == 2:
-            return "", "Skip", "User chose environment checks only"
-        return "", "Cancelled", "User cancelled"
-
-    # r == 2: File
-    path, err = ask_file_parent_path()
-    if path:
-        return path, "File requester parent folder", None
-    return "", "Error", err or "File requester failed"
-
-
-# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 def main():
-    # -- Interactive path selection --
-    test_path, path_source, path_error = interactive_select_path()
-
-    if path_source == "Cancelled":
-        tde4.postQuestionRequester(
-            "Probe Unicode Paths - Cancelled",
-            "No checks were performed.",
-            "Ok",
-        )
-        return
-
-    if path_source == "Error":
-        tde4.postQuestionRequester(
-            "Probe Unicode Paths - Error",
-            "Path selection failed:\n"
-            "  %s\n"
-            "\n"
-            "Try setting TEST_UNICODE_PATH manually\n"
-            "or use Skip for environment checks only."
-            % (path_error or "unknown"),
-            "Ok",
-        )
-        return
-
-    # -- Build report --
     report = []
     report.append("=" * 60)
     report.append("Probe Unicode Paths - Full Report")
     report.append("=" * 60)
-    report.append("")
-
-    # Path source info
-    report.append("-" * 60)
-    report.append("Path Source")
-    report.append("-" * 60)
-    report.append("Source:        %s" % path_source)
-    report.append("Selected path: %s" % safe_repr(test_path if test_path else "(none)"))
-    if path_error:
-        report.append("Error:         %s" % path_error)
     report.append("")
 
     # 1. Environment
@@ -461,7 +351,7 @@ def main():
     report.append("")
 
     # 2. Path test
-    path_lines = probe_path(test_path)
+    path_lines = probe_path(TEST_UNICODE_PATH)
     report.extend(path_lines)
     report.append("")
 
@@ -470,11 +360,10 @@ def main():
     report.extend(api_lines)
     report.append("")
 
-    # 4. Optional requester return-value test (only if we have a path from a requester)
-    if "requester" in path_source.lower():
-        req_lines = probe_native_requester_return(test_path)
-        report.extend(req_lines)
-        report.append("")
+    # 4. Optional native requester test
+    req_lines = probe_native_requester()
+    report.extend(req_lines)
+    report.append("")
 
     # 5. Classification
     class_lines = classify(env_lines, path_lines)
@@ -486,22 +375,23 @@ def main():
     print(full_report)
 
     # Short popup
-    if test_path:
-        path_status = safe_repr(test_path)
-        if len(path_status) > 60:
-            path_status = path_status[:57] + "..."
-    else:
-        path_status = "(none - %s)" % path_source
+    has_path = bool(TEST_UNICODE_PATH.strip())
+    path_status = "provided" if has_path else "not set"
 
     tde4.postQuestionRequester(
         "Probe Unicode Paths - Done",
         "Probe complete.\n"
         "\n"
-        "Path source: %s\n"
         "Test path: %s\n"
         "\n"
-        "Full report printed to console."
-        % (path_source, path_status),
+        "Full report printed to console.\n"
+        "\n"
+        "Check for:\n"
+        "  - os.path.exists result\n"
+        "  - listdir visibility\n"
+        "  - requester mojibake indicators\n"
+        "  - Case A/B/C/D classification"
+        % path_status,
         "Ok",
     )
 

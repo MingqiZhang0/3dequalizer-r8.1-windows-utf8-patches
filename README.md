@@ -276,18 +276,10 @@ this occurs.
 ### Experimental: Unicode Path Probe
 
 `Probe_Unicode_Paths.py` is a read-only diagnostic script for
-checking whether Chinese folder names are handled by Python,
-3DE requester UI, or specific import scripts.
-
-Normally, run the probe inside 3DE and choose:
-
-- `Folder` to select a folder directly, if supported;
-- `File` to select any file inside the target folder and test
-  its parent folder;
-- `Skip` to run environment checks only.
-
-`TEST_UNICODE_PATH` at the top of the script is only a fallback
-for environments where 3DE requesters do not work.
+checking whether Chinese folder names are handled correctly by
+Python, 3DE requester UI, or specific import scripts.  It does
+not modify files.  Set `TEST_UNICODE_PATH` at the top of the
+script to test a specific Chinese-named folder.
 
 ## Unreleased (v0.3.0-dev)
 
