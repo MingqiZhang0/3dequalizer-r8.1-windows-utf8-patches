@@ -8,10 +8,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+
+- `UTF8_Patch_Manager.py` - root-level unified launcher for the patch
+  toolkit.  Provides menu access to scan, backup, fix, rollback,
+  cleanup, and help while preserving each tool's own safety
+  confirmation dialogs.
+
 ### Planned
 
-- v0.3.0: add `UTF8_Patch_Manager.py` as a single root UI entry point.
-- v0.3.0: move individual tools into `scripts/` after the manager is stable.
+- v0.3.0: move individual tools into `scripts/` after the manager
+  is stable and well-tested.
 - Future: document exact-match table maintenance and optional
   expected-count validation.
 
