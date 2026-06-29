@@ -22,11 +22,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   selection, so users do not need to edit `TEST_UNICODE_PATH`
   for normal testing.
 
-### Fixed
-
-- `Probe_Unicode_Paths.py` no longer reports Case B when the user
-  selects Skip / environment-only diagnostics without a test path.
-
 ### Planned
 
 - Future: move individual tools into `scripts/` after the manager

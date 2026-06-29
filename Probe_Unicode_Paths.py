@@ -117,13 +117,7 @@ def probe_path(test_path):
     lines.append("Input:            %s" % safe_repr(test_path))
 
     if not test_path:
-        lines.append("(no test path selected)")
-        lines.append("")
-        lines.append("To test a Chinese folder:")
-        lines.append("  run the probe again and choose File mode,")
-        lines.append("  then select any file inside the target folder.")
-        lines.append("")
-        lines.append("TEST_UNICODE_PATH is only a fallback.")
+        lines.append("(no test path provided - set TEST_UNICODE_PATH)")
         return lines
 
     # Existence
@@ -253,27 +247,12 @@ def probe_native_requester_return(test_path):
     return lines
 
 
-def classify(env_lines, path_lines, test_path):
+def classify(env_lines, path_lines):
     """Classify the issue based on probe results."""
     lines = []
     lines.append("-" * 60)
     lines.append("Diagnostic Classification")
     lines.append("-" * 60)
-
-    # No test path selected - environment-only run
-    if not test_path:
-        lines.append("RESULT: Environment-only check")
-        lines.append("")
-        lines.append("No Unicode test path was selected.")
-        lines.append("Path-specific classification was not performed.")
-        lines.append("")
-        lines.append("Use File mode to select any file inside a Chinese")
-        lines.append("folder, or set TEST_UNICODE_PATH as a fallback.")
-        lines.append("")
-        lines.append("Note: Case A (native 3DE UI / requester display")
-        lines.append("limitation) can only be confirmed by visual")
-        lines.append("inspection of the requester window.")
-        return lines
 
     full_report = "\n".join(env_lines + path_lines)
 
@@ -303,9 +282,12 @@ def classify(env_lines, path_lines, test_path):
         lines.append("  Likely Python/runtime/filesystem encoding issue.")
         lines.append("  Further script-level patch may be possible.")
     else:
+        lines.append("No path test was performed.")
+        lines.append("Set TEST_UNICODE_PATH to a Chinese-named folder")
+        lines.append("and re-run to get a specific classification.")
+        lines.append("")
         lines.append("RESULT: Undetermined")
-        lines.append("  Cannot classify the path behavior from probe data.")
-        lines.append("  Review the Path Test section above for details.")
+        lines.append("  Cannot classify without a test path.")
 
     # Always add Case A possibility
     lines.append("")
@@ -495,7 +477,7 @@ def main():
         report.append("")
 
     # 5. Classification
-    class_lines = classify(env_lines, path_lines, test_path)
+    class_lines = classify(env_lines, path_lines)
     report.extend(class_lines)
     report.append("")
     report.append("=" * 60)
@@ -508,28 +490,18 @@ def main():
         path_status = safe_repr(test_path)
         if len(path_status) > 60:
             path_status = path_status[:57] + "..."
-        popup_text = (
-            "Probe complete.\n"
-            "\n"
-            "Path source: %s\n"
-            "Test path: %s\n"
-            "\n"
-            "Full report printed to console."
-            % (path_source, path_status)
-        )
     else:
-        popup_text = (
-            "Environment check completed.\n"
-            "\n"
-            "No Unicode path was selected.\n"
-            "Use File mode to test a Chinese folder.\n"
-            "\n"
-            "Full report printed to console."
-        )
+        path_status = "(none - %s)" % path_source
 
     tde4.postQuestionRequester(
         "Probe Unicode Paths - Done",
-        popup_text,
+        "Probe complete.\n"
+        "\n"
+        "Path source: %s\n"
+        "Test path: %s\n"
+        "\n"
+        "Full report printed to console."
+        % (path_source, path_status),
         "Ok",
     )
 
