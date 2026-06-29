@@ -438,7 +438,7 @@ def show_help():
 
 
 def menu_tools():
-    """Second-level menu: Backup | Fix | Undo | More | Cancel"""
+    """Second-level menu: Backup | Fix | More | Cancel  (4 buttons max)"""
     result = tde4.postQuestionRequester(
         "UTF-8 Patch Manager - Tools",
         "Choose a tool.\n"
@@ -449,12 +449,9 @@ def menu_tools():
         "Fix:\n"
         "  Apply selected UTF-8 patches.\n"
         "\n"
-        "Undo:\n"
-        "  Roll back from local backups if available.\n"
-        "\n"
         "More:\n"
-        "  Cleanup and help.",
-        "Backup", "Fix", "Undo", "More", "Cancel",
+        "  Undo, cleanup, and help.",
+        "Backup", "Fix", "More", "Cancel",
     )
 
     if result == 1:
@@ -462,36 +459,31 @@ def menu_tools():
     elif result == 2:
         run_tool_script("fix")
     elif result == 3:
-        run_tool_script("rollback")
-    elif result == 4:
         menu_more()
-    # result == 5 or anything else: Cancel -> back to main
+    # result == 4 or anything else: Cancel -> back to main
 
 
 def menu_more():
-    """Third-level menu: Cleanup | Help | Back | Cancel"""
+    """Third-level menu: Undo | Cleanup | Help | Back  (4 buttons max)"""
     result = tde4.postQuestionRequester(
-        "UTF-8 Patch Manager - More Tools",
-        "Additional tools.\n"
+        "UTF-8 Patch Manager - More",
+        "Undo:\n"
+        "  Roll back from local backups if available.\n"
         "\n"
         "Cleanup:\n"
         "  Delete known .encoding_backup files.\n"
-        "  This reduces local rollback ability.\n"
         "  Use only after verification and external\n"
-        "  backup.\n"
-        "\n"
-        "Help:\n"
-        "  Show safety notes.",
-        "Cleanup", "Help", "Back", "Cancel",
+        "  backup.",
+        "Undo", "Cleanup", "Help", "Back",
     )
 
     if result == 1:
-        run_tool_script("cleanup")
+        run_tool_script("rollback")
     elif result == 2:
-        show_help()
+        run_tool_script("cleanup")
     elif result == 3:
-        return  # back to Tools menu
-    # result == 4 or anything else: Cancel -> back to main
+        show_help()
+    # result == 4 or anything else: Back -> Tools menu
 
 
 def main():
