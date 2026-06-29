@@ -438,86 +438,45 @@ def build_full_report(version_string, compat_label, blender_lines, existence_lin
 
 def build_short_summary(version_string, version_ok, blender_status_short, patch_status_short,
                         patch_counts, backup_count, existence_errors, issue_count):
-    """Build a compact popup summary (max ~15 lines for requester)."""
+    """Build an ultra-compact popup summary (max ~12 lines for requester)."""
     compat = "SUPPORTED" if version_ok else ("UNSUPPORTED" if version_string != "UNKNOWN" else "UNKNOWN")
 
     if issue_count > 0:
-        issues_line = "\nIssues found:\n  %d\n" % issue_count
-        if patch_status_short == "PARTIALLY PATCHED":
-            action = ("Check console details.\n"
-                      "Re-run Fix_Exporters_UTF8.py if version is supported.")
-        elif existence_errors > 0:
-            action = "Check console details. Missing target files detected."
-        else:
-            action = "Check console details."
+        footer = "Check console details."
     elif patch_status_short == "FULLY PATCHED":
-        issues_line = ""
-        action = "No action needed."
-    elif patch_status_short == "NOT PATCHED":
-        issues_line = ""
-        action = "Run Fix_Exporters_UTF8.py to apply the patch." if version_ok else "Unsupported version. Do NOT run the patcher."
+        footer = "No action needed."
     else:
-        issues_line = "\nIssues found:\n  %d\n" % issue_count
-        action = "Check console details."
+        footer = "Check console details."
 
-    # Optional cleanup hint
-    if patch_status_short == "FULLY PATCHED" and backup_count > 0:
-        cleanup_hint = ("\n"
-                        "Optional:\n"
-                        "  Backup files may be cleaned with\n"
-                        "  Cleanup_UTF8_Backups.py after\n"
-                        "  verification, but keeping them is\n"
-                        "  recommended.")
-    else:
-        cleanup_hint = ""
+    total = patch_counts.get("total_entries", 0)
+    patched = patch_counts.get("patched", 0)
 
-    summary = (
+    return (
         "Scan complete.\n"
         "\n"
-        "Detected 3DE version:\n"
-        "  %s\n"
+        "Version: %s\n"
+        "Compatibility: %s\n"
+        "Blender legacy: %s\n"
+        "Patch status: %s\n"
+        "Patch points: %d/%d patched\n"
+        "Issues: %d\n"
+        "Backup files: %d\n"
+        "Missing files: %d\n"
         "\n"
-        "Compatibility:\n"
-        "  %s\n"
+        "%s\n"
         "\n"
-        "Blender legacy:\n"
-        "  %s\n"
-        "\n"
-        "Patch status:\n"
-        "  %s\n"
-        "\n"
-        "Patch points:\n"
-        "  %d/%d entries patched\n"
-        "%s"
-        "\n"
-        "Issues found:\n"
-        "  %d\n"
-        "\n"
-        "Backup files found:\n"
-        "  %d\n"
-        "\n"
-        "Missing files:\n"
-        "  %d\n"
-        "\n"
-        "Recommended action:\n"
-        "  %s\n"
-        "%s"
-        "\n"
-        "Full details were printed to the 3DE Python console."
+        "Details printed to console."
     ) % (
         version_string,
         compat,
         blender_status_short,
         patch_status_short,
-        patch_counts.get("patched", 0), patch_counts.get("total_entries", 0),
-        issues_line,
+        patched, total,
         issue_count,
         backup_count,
         existence_errors,
-        action,
-        cleanup_hint,
+        footer,
     )
-    return summary
 
 
 def build_summary(version_string, version_ok, blender_lines, patch_counts,
