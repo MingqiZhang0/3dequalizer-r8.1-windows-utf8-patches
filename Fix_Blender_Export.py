@@ -6,6 +6,10 @@
 #
 # 3DE4.script.gui: Main Window::Python
 #
+# 3DE4.script.comment: LEGACY / BLENDER-ONLY HELPER.
+# 3DE4.script.comment: Superseded by Fix_Exporters_UTF8.py which covers Blender + Maya +
+# 3DE4.script.comment: Piggyback Camera + Flame Matchbox in a single run.
+# 3DE4.script.comment: Use Fix_Exporters_UTF8.py as the default entry point.
 # 3DE4.script.comment: Fixes: (1) Blender export button not responding due to script name collision,
 # 3DE4.script.comment:        (2) UnicodeDecodeError on Windows Chinese locale due to missing UTF-8 encoding.
 # 3DE4.script.comment: Run once, then restart 3DE4.
@@ -27,21 +31,30 @@ def get_py_scripts_dir():
     return os.path.join(install, "sys_data", "py_scripts")
 
 
+def get_disabled_dir():
+    """Return the absolute path to sys_data/py_scripts_disabled."""
+    install = tde4.get3DEInstallPath()
+    return os.path.join(install, "sys_data", "py_scripts_disabled")
+
+
 def fix_name_collision(py_scripts):
     """
-    Rename export_blender.py → export_blender.py.bak
+    Move export_blender.py → py_scripts_disabled/export_blender.py.bak
     so 3DE4 no longer registers the old v1.3 script.
+    (Target location matches Fix_Exporters_UTF8.py.)
     """
+    disabled = get_disabled_dir()
     old_file = os.path.join(py_scripts, "export_blender.py")
-    bak_file = os.path.join(py_scripts, "export_blender.py.bak")
+    bak_file = os.path.join(disabled, "export_blender.py.bak")
 
     if os.path.isfile(bak_file):
-        FIX_LOG.append("[SKIP] export_blender.py.bak already exists — name collision already resolved.")
+        FIX_LOG.append("[SKIP] export_blender.py.bak already exists in py_scripts_disabled/ — name collision already resolved.")
         return
 
     if os.path.isfile(old_file):
-        os.rename(old_file, bak_file)
-        FIX_LOG.append("[OK] Renamed export_blender.py → export_blender.py.bak (removed name collision).")
+        os.makedirs(disabled, exist_ok=True)
+        shutil.move(old_file, bak_file)
+        FIX_LOG.append("[OK] Moved export_blender.py → py_scripts_disabled/export_blender.py.bak (removed name collision).")
     else:
         FIX_LOG.append("[SKIP] export_blender.py not found — name collision may not exist on this installation.")
 
@@ -95,10 +108,11 @@ def fix_utf8_encoding(py_scripts):
 def main():
     py_scripts = get_py_scripts_dir()
 
-    tde4.postQuestionRequester(
-        "Fix Blender Export v1.0",
+    result = tde4.postQuestionRequester(
+        "Fix Blender Export v1.0 (Legacy)",
         "This script will:\n\n"
-        "  1) Rename export_blender.py → .bak\n"
+        "  1) Move export_blender.py →\n"
+        "     py_scripts_disabled/\n"
         "     (eliminates menu name collision)\n\n"
         "  2) Add UTF-8 encoding to open()\n"
         "     calls in exportBlender.py\n"
@@ -106,12 +120,26 @@ def main():
         "     Chinese Windows)\n\n"
         "A backup of exportBlender.py will be\n"
         "saved with suffix .encoding_backup\n\n"
+        "NOTE: This is the LEGACY Blender-only\n"
+        "script.  Consider using\n"
+        "Fix_Exporters_UTF8.py instead — it\n"
+        "covers Blender + Maya + Piggyback\n"
+        "Camera + Flame in a single run.\n\n"
         "After the fix, you MUST restart 3DE4.",
         "Proceed", "Cancel",
     )
 
-    # Ask which fixes to apply (user is already committed by clicking Proceed)
-    # but we double-check...
+    # tde4.postQuestionRequester returns 1 for the first button
+    # ("Proceed"), 2 for the second ("Cancel").  Anything else is
+    # treated as cancel to be safe.
+    if result != 1:
+        FIX_LOG.append("[ABORT] User cancelled — no changes were made.")
+        tde4.postQuestionRequester(
+            "Fix Blender Export — Cancelled",
+            "No changes were made.",
+            "Ok",
+        )
+        return
 
     # Apply fixes
     fix_name_collision(py_scripts)

@@ -100,6 +100,10 @@ Main Window > Python > Run Script... → Select Fix_Exporters_UTF8.py
 
 Then **fully restart 3DE4** (do NOT just use `tde4.rescanPythonDirs()`).
 
+> **Note:** `Fix_Blender_Export.py` is a legacy Blender-only helper kept for
+> reference. It is superseded by `Fix_Exporters_UTF8.py`. Do not use it as
+> the default entry point.
+
 ## Rollback
 
 All modified files have backup copies saved with suffix `.encoding_backup` in the same directory.

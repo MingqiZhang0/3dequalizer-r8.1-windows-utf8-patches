@@ -1,5 +1,25 @@
 # 3DEqualizer4 R8.1 Windows UTF-8 Manual Patches
 
+> ⚠️ **UNOFFICIAL PATCH — USE AT YOUR OWN RISK**
+>
+> - This is an **unofficial, community-maintained** patch. It is NOT
+>   affiliated with, endorsed by, or supported by Science-D-Visions.
+> - **Tested only on 3DEqualizer4 R8.1 (Windows), Chinese / GBK locale.**
+>   Other versions, platforms, and locales have NOT been tested.
+> - This repository does **NOT** redistribute any proprietary 3DEqualizer
+>   files. It only contains patch scripts and documentation.
+> - **Always back up** your 3DEqualizer4 installation folder before applying.
+> - **Run scripts inside 3DEqualizer4** (Main Window → Python → Run Script…),
+>   NOT from a system terminal / standalone Python.
+> - **`errors='replace'` caveat:** The patch adds `errors='replace'` to
+>   `open()` calls that read script headers, preferences, logs, and
+>   internal templates. This prevents crashes but **may silently replace**
+>   undecodable bytes with `U+FFFD` (�). For user-data paths (e.g., the
+>   Piggyback Camera calibration import), we intentionally use strict UTF-8
+>   mode **without** `errors='replace'` so bad data raises a visible error.
+> - See [Potential_Risks.md](Potential_Risks.md) for a full audit of known
+>   issues in the R8.1 codebase.
+
 Manual compatibility patches for 3DEqualizer4 R8.1 exporters on Chinese Windows locale.
 
 ## Overview
@@ -25,10 +45,11 @@ This repository addresses two issues with 3DEqualizer4 R8.1 on Chinese Windows
 
 ## Included Patches
 
-| Patch | Purpose |
-|-------|---------|
-| `Fix_Blender_Export.py` | Moves `export_blender.py` out of `py_scripts/` and adds UTF-8 encoding to `exportBlender.py` read calls. |
-| `Fix_Exporters_UTF8.py` | Adds explicit UTF-8 encoding to read-mode `open()` / `exec(open(…).read())` in 4 exporter scripts. |
+| File | Role | Status |
+|------|------|--------|
+| `Fix_Exporters_UTF8.py` | **Main patch** — fixes Blender name collision + UTF-8 encoding in Blender, Maya, Piggyback Camera, and Flame Matchbox exporters (4 files). Uses exact-match replacement table. Run this one. | ✅ **Use this** |
+| `Rollback_UTF8_Patches.py` | **Rollback** — restores all `.encoding_backup` files and moves the disabled `export_blender.py` back. | ↩ Use if needed |
+| `Fix_Blender_Export.py` | **Legacy / Blender-only helper** — Blender fix only. Superseded by `Fix_Exporters_UTF8.py`. Kept for reference. | ⛔ Do not use as default entry point |
 
 ## Tested Environment
 
@@ -41,21 +62,54 @@ Other 3DE versions and operating systems are **not** tested.
 
 ## Usage
 
-1. **Close 3DEqualizer4 completely.**
-2. Back up your 3DEqualizer4 installation folder.
-3. Run the desired patch script with Python 3:
-   ```bash
-   python Fix_Blender_Export.py
-   python Fix_Exporters_UTF8.py
-   ```
-4. When prompted, select or input your 3DEqualizer4 installation directory.
-5. Restart 3DEqualizer4.
-6. Verify:
-   - `Main Window > 3DE4 > Export Project > Blender...`
-   - `Main Window > 3DE4 > Export Project > Maya...`
+> ⚠️ **These scripts MUST be run INSIDE 3DEqualizer4.**
+> They import `tde4` (the 3DE4 Python API) and will **fail** with
+> `ModuleNotFoundError: No module named 'tde4'` if run from a system
+> terminal or standalone Python.
 
-If the installation directory is in a protected location (e.g. `Program Files`),
-run the terminal as Administrator so the script can write to `sys_data/`.
+### Before You Apply
+
+1. **Completely close 3DEqualizer4.**
+2. **Back up your entire 3DEqualizer4 installation folder** (e.g., copy
+   `C:\Program Files\3DEqualizer4` to a safe location).
+3. If 3DE4 is installed under `Program Files` or another protected directory,
+   you **must launch 3DEqualizer4 as Administrator** so the script can
+   write to `sys_data/`.
+
+### Applying the Patch
+
+1. Launch 3DEqualizer4 (right-click → **Run as administrator** if needed).
+2. Go to **Main Window → Python → Run Script…**
+3. Select **`Fix_Exporters_UTF8.py`** from this repository.
+4. Read the confirmation dialog carefully. It lists every file that
+   will be modified. Click **Proceed** to apply, or **Cancel** to abort.
+5. After the script completes and shows its report, **fully exit
+   3DEqualizer4** (do NOT just use "Rescan Python Directories").
+6. Restart 3DEqualizer4 normally.
+7. Verify the exporter menus work:
+   - **Main Window → 3DE4 → Export Project → Blender…** (dialog should appear)
+   - **Main Window → 3DE4 → Export Project → Maya…** (dialog should appear)
+
+### What NOT to Do
+
+- ❌ Do **NOT** run `python Fix_Exporters_UTF8.py` from a terminal.
+- ❌ Do **NOT** skip Step 5 — 3DE4 caches scripts at startup, and a simple
+  "Rescan Python Directories" is not enough.
+- ❌ Do **NOT** apply the patch while 3DE4 has unsaved project work open.
+
+### Rollback
+
+If something goes wrong, or you want to undo all changes:
+
+1. Launch 3DEqualizer4 (as Administrator if needed).
+2. Go to **Main Window → Python → Run Script…**
+3. Select **`Rollback_UTF8_Patches.py`** from this repository.
+4. Review the preview of files to be restored. Click **Proceed**.
+5. **Fully exit** 3DEqualizer4, then restart it.
+
+The rollback script restores all `.encoding_backup` files and moves the
+disabled `export_blender.py` back to `py_scripts/`. It is **idempotent**
+— safe to run multiple times.
 
 ## Affected Local Files
 
