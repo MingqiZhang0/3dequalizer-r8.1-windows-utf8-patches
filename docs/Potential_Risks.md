@@ -220,7 +220,7 @@ The list accumulates data across repeated calls, causing unexpected behavior.
 | 🔵 Info | Debug artifacts | ~7 sites | Harmless but not clean |
 | 🔵 Info | Script metadata gaps | ~18 scripts | No functional impact |
 
----
+
 
 ---
 

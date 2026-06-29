@@ -269,6 +269,7 @@ this occurs.
 | `docs/Fix_README.md` | Detailed fix notes — root causes, symptoms, rollback |
 | `docs/Potential_Risks.md` | Original R8.1 audit findings and patch-related safety notes |
 | `CHANGELOG.md` | Version history (Keep a Changelog format) |
+| `docs/RELEASE_NOTES_v0.2.0.md` | v0.2.0 GitHub Release notes |
 | `docs/RELEASE_NOTES_v0.1.0.md` | v0.1.0 GitHub Release notes |
 
 ## Development Note
