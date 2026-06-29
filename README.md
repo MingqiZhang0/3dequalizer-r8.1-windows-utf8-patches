@@ -288,9 +288,12 @@ Normally, run the probe inside 3DE and choose:
   Copy the path in Windows Explorer first;
 - `Skip` to run environment checks only.
 
-Use `Clip` if File mode fails on Chinese paths.  `TEST_UNICODE_PATH`
-at the top of the script remains a fallback for environments where
-clipboard access does not work.
+If `Clip` succeeds but `File` fails on the same Chinese path, Python
+filesystem access is working and the issue is likely in the native
+3DE requester / UI path conversion layer.
+
+`TEST_UNICODE_PATH` at the top of the script remains a fallback for
+environments where clipboard access does not work.
 
 `TEST_UNICODE_PATH` at the top of the script is only a fallback
 for environments where 3DE requesters do not work.
