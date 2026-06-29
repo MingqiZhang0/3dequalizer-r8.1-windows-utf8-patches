@@ -15,6 +15,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   cleanup, and help while preserving each tool's own safety
   confirmation dialogs.
 
+### Fixed
+
+- `UTF8_Patch_Manager.py` toolkit root resolution: added robust
+  directory search (manual override, `__file__`, cwd, parent
+  directories) and `TOOLKIT_ROOT_OVERRIDE` fallback for 3DE
+  environments where `__file__` is unavailable. Main menu now
+  shows root FOUND / NOT FOUND status.
+
 ### Planned
 
 - v0.3.0: move individual tools into `scripts/` after the manager

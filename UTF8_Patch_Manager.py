@@ -50,15 +50,24 @@ def get_3de_version_string():
 
 
 # ---------------------------------------------------------------------------
-# Script discovery
+# Toolkit root resolution
 # ---------------------------------------------------------------------------
-def get_manager_dir():
-    """Directory containing this manager script."""
-    try:
-        return os.path.dirname(os.path.abspath(__file__))
-    except Exception:
-        return os.getcwd()
 
+# Optional manual override.
+# When 3DE does not provide a reliable __file__ for Run Script, set this
+# to the repository root directory.  Example:
+#   TOOLKIT_ROOT_OVERRIDE = r"E:\path\to\3dequalizer-r8.1-windows-utf8-patches"
+TOOLKIT_ROOT_OVERRIDE = ""
+
+# These five files must all be present for a directory to be considered
+# the toolkit root.
+REQUIRED_TOOL_FILES = [
+    "Fix_Exporters_UTF8.py",
+    "Backup_UTF8_Patch_Targets.py",
+    "Scan_Exporters_UTF8_Status.py",
+    "Rollback_UTF8_Patches.py",
+    "Cleanup_UTF8_Backups.py",
+]
 
 TOOL_SCRIPTS = {
     "scan":     "Scan_Exporters_UTF8_Status.py",
@@ -69,12 +78,141 @@ TOOL_SCRIPTS = {
 }
 
 
-def get_script_path(name):
-    """Return the full path to a tool script, or None if not found."""
-    fname = TOOL_SCRIPTS.get(name)
-    if fname is None:
-        return None
-    return os.path.join(get_manager_dir(), fname)
+def is_toolkit_root(path):
+    """Return True if *path* contains all five required tool scripts."""
+    if not path:
+        return False
+    try:
+        path = os.path.abspath(path)
+        if not os.path.isdir(path):
+            return False
+        for name in REQUIRED_TOOL_FILES:
+            if not os.path.isfile(os.path.join(path, name)):
+                return False
+        return True
+    except Exception:
+        return False
+
+
+def unique_existing_dirs(paths):
+    """Deduplicate and filter a list of paths to existing directories."""
+    result = []
+    seen = set()
+    for p in paths:
+        if not p:
+            continue
+        try:
+            ap = os.path.abspath(p)
+        except Exception:
+            continue
+        key = os.path.normcase(ap)
+        if key in seen:
+            continue
+        seen.add(key)
+        if os.path.isdir(ap):
+            result.append(ap)
+    return result
+
+
+def resolve_toolkit_root():
+    """
+    Try to locate the repository root directory.
+
+    Search order:
+      1. TOOLKIT_ROOT_OVERRIDE (manual, highest priority)
+      2. Directory of __file__ (if reliable)
+      3. Current working directory
+      4. Parent directories of all candidates (up to 4 levels)
+
+    Returns (root_path, checked_dirs) where root_path may be None.
+    """
+    candidates = []
+
+    # 1. Manual override first.
+    if TOOLKIT_ROOT_OVERRIDE.strip():
+        candidates.append(TOOLKIT_ROOT_OVERRIDE.strip())
+
+    # 2. Directory of __file__, if available.
+    try:
+        this_file = globals().get("__file__", "")
+        if this_file:
+            candidates.append(os.path.dirname(os.path.abspath(this_file)))
+    except Exception:
+        pass
+
+    # 3. Current working directory.
+    try:
+        candidates.append(os.getcwd())
+    except Exception:
+        pass
+
+    # 4. Parent directories of every candidate.
+    expanded = []
+    for c in candidates:
+        if not c:
+            continue
+        try:
+            cur = os.path.abspath(c)
+            for _ in range(4):
+                expanded.append(cur)
+                parent = os.path.dirname(cur)
+                if parent == cur:
+                    break
+                cur = parent
+        except Exception:
+            pass
+
+    checked = unique_existing_dirs(candidates + expanded)
+
+    for c in checked:
+        if is_toolkit_root(c):
+            return c, checked
+
+    return None, checked
+
+
+# ---------------------------------------------------------------------------
+# Root-not-found error
+# ---------------------------------------------------------------------------
+def show_root_not_found_error(script_name, candidates):
+    lines = []
+    lines.append("Toolkit root not found.")
+    lines.append("")
+    lines.append("Could not locate:")
+    lines.append("  %s" % script_name)
+    lines.append("")
+    lines.append("The manager could not find all required")
+    lines.append("tool scripts.")
+    lines.append("")
+    lines.append("Fix:")
+    lines.append("  Open UTF8_Patch_Manager.py")
+    lines.append("  Set TOOLKIT_ROOT_OVERRIDE to this")
+    lines.append("  repository folder.")
+    lines.append("")
+    lines.append("Example:")
+    lines.append('  TOOLKIT_ROOT_OVERRIDE = r"E:\\path\\to\\repo"')
+    lines.append("")
+    lines.append("Checked directories were printed to console.")
+
+    print("=" * 60)
+    print("UTF-8 Patch Manager - root resolution failed")
+    print("=" * 60)
+    print("Requested tool: %s" % script_name)
+    print("")
+    print("Checked directories:")
+    for c in candidates:
+        print("  %s" % c)
+    print("")
+    print("Required files:")
+    for name in REQUIRED_TOOL_FILES:
+        print("  %s" % name)
+    print("=" * 60)
+
+    tde4.postQuestionRequester(
+        "UTF-8 Patch Manager - Root Not Found",
+        "\n".join(lines),
+        "Ok",
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -88,17 +226,26 @@ def run_tool_script(name):
     Returns True if the script ran without unhandled exceptions,
     False if an error occurred.
     """
-    script_path = get_script_path(name)
     fname = TOOL_SCRIPTS.get(name, name)
 
-    if script_path is None or not os.path.isfile(script_path):
+    root_dir, candidates = resolve_toolkit_root()
+    if not root_dir:
+        show_root_not_found_error(fname, candidates)
+        return False
+
+    script_path = os.path.join(root_dir, fname)
+
+    if not os.path.isfile(script_path):
         tde4.postQuestionRequester(
             "Manager - Error",
             "Tool script not found:\n"
             "  %s\n"
             "\n"
+            "Expected at:\n"
+            "  %s\n"
+            "\n"
             "Please verify the repository files are complete."
-            % fname,
+            % (fname, script_path),
             "Ok",
         )
         return False
@@ -170,6 +317,11 @@ def show_help():
         "- After Fix or Rollback, fully restart\n"
         "  3DEqualizer4.\n"
         "\n"
+        "If the manager cannot find tool scripts,\n"
+        "edit TOOLKIT_ROOT_OVERRIDE at the top of\n"
+        "UTF8_Patch_Manager.py and set it to this\n"
+        "repository folder.\n"
+        "\n"
         "See README.md and docs/Potential_Risks.md\n"
         "for details.",
         "Ok",
@@ -236,6 +388,8 @@ def menu_more():
 
 def main():
     version_string = get_3de_version_string()
+    root_dir, _ = resolve_toolkit_root()
+    root_status = "FOUND" if root_dir else "NOT FOUND"
 
     while True:
         result = tde4.postQuestionRequester(
@@ -245,6 +399,9 @@ def main():
             "Detected 3DE version:\n"
             "  %s\n"
             "\n"
+            "Toolkit root:\n"
+            "  %s\n"
+            "\n"
             "Choose an action group.\n"
             "\n"
             "Recommended workflow:\n"
@@ -252,7 +409,7 @@ def main():
             "\n"
             "This manager only launches existing tools.\n"
             "Each tool keeps its own confirmation dialog."
-            % version_string,
+            % (version_string, root_status),
             "Scan", "Tools", "Help", "Cancel",
         )
 
