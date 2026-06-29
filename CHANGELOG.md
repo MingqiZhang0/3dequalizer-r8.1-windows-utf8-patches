@@ -90,6 +90,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - `Scan_Exporters_UTF8_Status.py` — a read-only diagnostic scanner
   for patch status, version compatibility, Blender legacy script
   state, and backup file presence.
+- `Cleanup_UTF8_Backups.py` — an optional guarded cleanup tool for
+  known `.encoding_backup` files.  Requires double confirmation;
+  does not delete disabled Blender legacy backups.
+- Scanner wording updated from "Backups found" to "Backup files found".
 
 ### Planned
 - Directory restructuring (`scripts/`, `legacy/`, `docs/`).

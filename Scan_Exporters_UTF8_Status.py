@@ -460,6 +460,17 @@ def build_short_summary(version_string, version_ok, blender_status_short, patch_
         issues_line = "\nIssues found:\n  %d\n" % issue_count
         action = "Check console details."
 
+    # Optional cleanup hint
+    if patch_status_short == "FULLY PATCHED" and backup_count > 0:
+        cleanup_hint = ("\n"
+                        "Optional:\n"
+                        "  Backup files may be cleaned with\n"
+                        "  Cleanup_UTF8_Backups.py after\n"
+                        "  verification, but keeping them is\n"
+                        "  recommended.")
+    else:
+        cleanup_hint = ""
+
     summary = (
         "Scan complete.\n"
         "\n"
@@ -482,14 +493,15 @@ def build_short_summary(version_string, version_ok, blender_status_short, patch_
         "Issues found:\n"
         "  %d\n"
         "\n"
-        "Backups found:\n"
+        "Backup files found:\n"
         "  %d\n"
         "\n"
-        "Files missing:\n"
+        "Missing files:\n"
         "  %d\n"
         "\n"
         "Recommended action:\n"
         "  %s\n"
+        "%s"
         "\n"
         "Full details were printed to the 3DE Python console."
     ) % (
@@ -503,6 +515,7 @@ def build_short_summary(version_string, version_ok, blender_status_short, patch_
         backup_count,
         existence_errors,
         action,
+        cleanup_hint,
     )
     return summary
 
