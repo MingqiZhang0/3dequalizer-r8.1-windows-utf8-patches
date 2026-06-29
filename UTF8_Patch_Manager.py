@@ -53,10 +53,9 @@ def get_3de_version_string():
 # Toolkit root resolution
 # ---------------------------------------------------------------------------
 
-# Optional manual override.
-# When 3DE does not provide a reliable __file__ for Run Script, set this
-# to the repository root directory.  Example:
-#   TOOLKIT_ROOT_OVERRIDE = r"E:\path\to\3dequalizer-r8.1-windows-utf8-patches"
+# Optional manual override (last-resort fallback).
+# Use this only if automatic search fails.  Example:
+#   TOOLKIT_ROOT_OVERRIDE = r"E:\3DEqualizer4\3de_utf8_patch_toolkit"
 TOOLKIT_ROOT_OVERRIDE = ""
 
 # These five files must all be present for a directory to be considered
@@ -67,6 +66,14 @@ REQUIRED_TOOL_FILES = [
     "Scan_Exporters_UTF8_Status.py",
     "Rollback_UTF8_Patches.py",
     "Cleanup_UTF8_Backups.py",
+]
+
+# Recommended toolkit folder names (checked under 3DE install dir and its parent).
+COMMON_TOOLKIT_DIR_NAMES = [
+    "3de_utf8_patch_toolkit",
+    "3dequalizer-r8.1-windows-utf8-patches",
+    "3dequalizer-r8.1-windows-utf8-patches-main",
+    "3dequalizer-r8.1-windows-utf8-patches-master",
 ]
 
 TOOL_SCRIPTS = {
@@ -94,67 +101,84 @@ def is_toolkit_root(path):
         return False
 
 
-def unique_existing_dirs(paths):
-    """Deduplicate and filter a list of paths to existing directories."""
-    result = []
-    seen = set()
-    for p in paths:
-        if not p:
-            continue
-        try:
-            ap = os.path.abspath(p)
-        except Exception:
-            continue
+def _add_dir(result, path):
+    """Add a path to the candidate list, deduplicating by normcase."""
+    if not path:
+        return
+    try:
+        ap = os.path.abspath(path)
+        if not os.path.isdir(ap):
+            return
         key = os.path.normcase(ap)
-        if key in seen:
-            continue
-        seen.add(key)
-        if os.path.isdir(ap):
-            result.append(ap)
-    return result
+        if key not in result["_seen"]:
+            result["_seen"].add(key)
+            result["dirs"].append(ap)
+    except Exception:
+        pass
 
 
-def resolve_toolkit_root():
+def collect_candidate_dirs():
     """
-    Try to locate the repository root directory.
+    Gather candidate directories to search for the toolkit root.
 
-    Search order:
-      1. TOOLKIT_ROOT_OVERRIDE (manual, highest priority)
-      2. Directory of __file__ (if reliable)
-      3. Current working directory
-      4. Parent directories of all candidates (up to 4 levels)
-
-    Returns (root_path, checked_dirs) where root_path may be None.
+    Search sources (in priority order):
+      1. TOOLKIT_ROOT_OVERRIDE
+      2. __file__ directory
+      3. os.getcwd()
+      4. 3DE install path + common subdirectory names
+      5. Parent of 3DE install path + common subdirectory names
+      6. Parent directories of all current candidates (up to 4 levels)
     """
-    candidates = []
+    result = {"dirs": [], "_seen": set()}
+    add = lambda p: _add_dir(result, p)
 
-    # 1. Manual override first.
+    # 1. Manual override
     if TOOLKIT_ROOT_OVERRIDE.strip():
-        candidates.append(TOOLKIT_ROOT_OVERRIDE.strip())
+        add(TOOLKIT_ROOT_OVERRIDE.strip())
 
-    # 2. Directory of __file__, if available.
+    # 2. __file__ directory
     try:
         this_file = globals().get("__file__", "")
         if this_file:
-            candidates.append(os.path.dirname(os.path.abspath(this_file)))
+            add(os.path.dirname(os.path.abspath(this_file)))
     except Exception:
         pass
 
-    # 3. Current working directory.
+    # 3. Current working directory
     try:
-        candidates.append(os.getcwd())
+        add(os.getcwd())
     except Exception:
         pass
 
-    # 4. Parent directories of every candidate.
-    expanded = []
-    for c in candidates:
-        if not c:
-            continue
+    # 4 & 5. 3DE install path and its parent, with common subdirs
+    install = ""
+    try:
+        install = tde4.get3DEInstallPath()
+    except Exception:
+        pass
+
+    bases = []
+    if install:
+        try:
+            bases.append(os.path.abspath(install))
+            parent = os.path.dirname(os.path.abspath(install))
+            if parent and parent != os.path.abspath(install):
+                bases.append(parent)
+        except Exception:
+            pass
+
+    for base in bases:
+        add(base)  # the install dir itself may contain the toolkit
+        for name in COMMON_TOOLKIT_DIR_NAMES:
+            add(os.path.join(base, name))
+
+    # 6. Parent directories of all current candidates (up to 4 levels)
+    initial = list(result["dirs"])
+    for c in initial:
         try:
             cur = os.path.abspath(c)
             for _ in range(4):
-                expanded.append(cur)
+                add(cur)
                 parent = os.path.dirname(cur)
                 if parent == cur:
                     break
@@ -162,35 +186,64 @@ def resolve_toolkit_root():
         except Exception:
             pass
 
-    checked = unique_existing_dirs(candidates + expanded)
+    return result["dirs"]
 
-    for c in checked:
+
+def resolve_toolkit_root():
+    """
+    Locate the repository root directory.
+
+    Automatic search is always attempted first.  Returns
+    (root_path, checked_dirs) where root_path may be None.
+    """
+    candidates = collect_candidate_dirs()
+
+    # If override is set but invalid, warn in console and continue search.
+    override = TOOLKIT_ROOT_OVERRIDE.strip()
+    if override:
+        if is_toolkit_root(override):
+            print("[INFO] Toolkit root resolved via TOOLKIT_ROOT_OVERRIDE:")
+            print("       %s" % os.path.abspath(override))
+            return os.path.abspath(override), candidates
+        else:
+            print("[WARN] TOOLKIT_ROOT_OVERRIDE is set but is not a valid toolkit root:")
+            print("       %s" % override)
+            print("       Continuing automatic search...")
+
+    for c in candidates:
         if is_toolkit_root(c):
-            return c, checked
+            print("[INFO] Toolkit root resolved:")
+            print("       %s" % c)
+            return c, candidates
 
-    return None, checked
+    return None, candidates
 
 
 # ---------------------------------------------------------------------------
 # Root-not-found error
 # ---------------------------------------------------------------------------
 def show_root_not_found_error(script_name, candidates):
+    try:
+        install = tde4.get3DEInstallPath()
+    except Exception:
+        install = "<3DE install path>"
+
     lines = []
     lines.append("Toolkit root not found.")
-    lines.append("")
-    lines.append("Could not locate:")
-    lines.append("  %s" % script_name)
     lines.append("")
     lines.append("The manager could not find all required")
     lines.append("tool scripts.")
     lines.append("")
-    lines.append("Fix:")
-    lines.append("  Open UTF8_Patch_Manager.py")
-    lines.append("  Set TOOLKIT_ROOT_OVERRIDE to this")
-    lines.append("  repository folder.")
+    lines.append("Recommended fix:")
+    lines.append("  Put the whole patch toolkit folder under")
+    lines.append("  your 3DE install folder, for example:")
     lines.append("")
-    lines.append("Example:")
-    lines.append('  TOOLKIT_ROOT_OVERRIDE = r"E:\\path\\to\\repo"')
+    lines.append("  %s\\3de_utf8_patch_toolkit\\" % install)
+    lines.append("")
+    lines.append("Alternative:")
+    lines.append("  Edit TOOLKIT_ROOT_OVERRIDE at the top of")
+    lines.append("  UTF8_Patch_Manager.py and set it to the")
+    lines.append("  toolkit folder.")
     lines.append("")
     lines.append("Checked directories were printed to console.")
 
@@ -206,6 +259,9 @@ def show_root_not_found_error(script_name, candidates):
     print("Required files:")
     for name in REQUIRED_TOOL_FILES:
         print("  %s" % name)
+    print("")
+    print("Recommended layout:")
+    print("  %s\\3de_utf8_patch_toolkit\\" % install)
     print("=" * 60)
 
     tde4.postQuestionRequester(
@@ -317,10 +373,14 @@ def show_help():
         "- After Fix or Rollback, fully restart\n"
         "  3DEqualizer4.\n"
         "\n"
-        "If the manager cannot find tool scripts,\n"
-        "edit TOOLKIT_ROOT_OVERRIDE at the top of\n"
-        "UTF8_Patch_Manager.py and set it to this\n"
-        "repository folder.\n"
+        "If the manager cannot find tool scripts:\n"
+        "\n"
+        "1. Put the whole toolkit folder under your\n"
+        "   3DE install folder:\n"
+        "   <3DE install>\\3de_utf8_patch_toolkit\\\n"
+        "\n"
+        "2. Or set TOOLKIT_ROOT_OVERRIDE at the top\n"
+        "   of UTF8_Patch_Manager.py.\n"
         "\n"
         "See README.md and docs/Potential_Risks.md\n"
         "for details.",

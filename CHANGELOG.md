@@ -17,11 +17,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
-- `UTF8_Patch_Manager.py` toolkit root resolution: added robust
-  directory search (manual override, `__file__`, cwd, parent
-  directories) and `TOOLKIT_ROOT_OVERRIDE` fallback for 3DE
-  environments where `__file__` is unavailable. Main menu now
-  shows root FOUND / NOT FOUND status.
+- `UTF8_Patch_Manager.py` toolkit root resolution: now automatically
+  searches common locations including the 3DE install folder and
+  recommended subdirectory names (`3de_utf8_patch_toolkit`,
+  `3dequalizer-r8.1-windows-utf8-patches`, etc.) before falling
+  back to `TOOLKIT_ROOT_OVERRIDE`. Root-not-found UI now shows
+  the recommended folder layout as the primary fix.
 
 ### Planned
 

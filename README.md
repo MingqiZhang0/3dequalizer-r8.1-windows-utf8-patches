@@ -272,6 +272,25 @@ this occurs.
 | `docs/RELEASE_NOTES_v0.2.0.md` | v0.2.0 GitHub Release notes |
 | `docs/RELEASE_NOTES_v0.1.0.md` | v0.1.0 GitHub Release notes |
 
+## Unreleased (v0.3.0-dev)
+
+`UTF8_Patch_Manager.py` is a unified launcher (main menu: Scan |
+Tools | Help | Cancel).  Run it inside 3DEqualizer4 instead of
+launching each tool script individually.
+
+If the manager cannot find the tool scripts, put the whole toolkit
+folder under your 3DEqualizer4 installation folder, for example:
+
+```text
+<3DE install path>\3de_utf8_patch_toolkit\
+```
+
+Keep all toolkit files together.  Do not copy only the manager
+script by itself.
+
+If automatic search still fails, edit `TOOLKIT_ROOT_OVERRIDE` at
+the top of `UTF8_Patch_Manager.py` and set it to the toolkit folder.
+
 ## Development Note
 
 This project was developed with AI-assisted coding support.
