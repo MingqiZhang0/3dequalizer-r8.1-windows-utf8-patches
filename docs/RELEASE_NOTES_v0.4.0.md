@@ -48,9 +48,9 @@ into `scripts/` and the legacy Blender-only helper has been removed.
 
 ## Tested
 
-- Real 3DEqualizer4 R8.1 smoke test is required before publishing this
-  release.  At minimum, verify the manager launches, finds the toolkit
-  root, and can start each tool from `scripts/`.
+- Real 3DEqualizer4 R8.1 Manager smoke test passed on Windows
+  Chinese/GBK locale: manager launches, finds toolkit root in new
+  layout, and starts all five tools from `scripts/`.
 
 ---
 
@@ -59,7 +59,8 @@ into `scripts/` and the legacy Blender-only helper has been removed.
 - Does not support R8.0 / R8.2 / R9.
 - Does not support macOS / Linux.
 - Does not redistribute original 3DE files.
-- Real 3DE4 smoke test pending at time of writing.
+- Manual 3DE Manager smoke test passed on 3DEqualizer4 Release 8.1
+  Windows Chinese/GBK environment.
 
 ---
 

@@ -23,6 +23,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Removed legacy Blender-only helper from the active tree.  The
   Blender conflict fix remains in `scripts/Fix_Exporters_UTF8.py`.
 
+### Tested
+
+- Manual 3DE Manager smoke test passed on 3DEqualizer4 Release 8.1
+  Windows Chinese/GBK environment: manager launches, finds toolkit
+  root, starts all five tools from `scripts/`.
+
 ### Planned
 
 - Future: document exact-match table maintenance and optional
