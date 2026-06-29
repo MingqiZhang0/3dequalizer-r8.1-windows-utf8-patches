@@ -316,7 +316,7 @@ def scan_patch_points(py_scripts):
     total_unpatched = 0
     total_partial = 0
     total_unknown = 0
-    total_expected = 0
+    total_entries = 0
 
     for group in STATUS_TABLE:
         fname = group["file"]
@@ -324,7 +324,6 @@ def scan_patch_points(py_scripts):
         path = os.path.join(py_scripts, fname)
 
         if not os.path.isfile(path):
-            # Already reported in scan_file_existence; skip here
             continue
 
         with open(path, "r", encoding="utf-8", errors="replace") as f:
@@ -333,10 +332,9 @@ def scan_patch_points(py_scripts):
         for entry in group["entries"]:
             comment = entry["comment"]
             expected = entry.get("expected_count", 1)
-            total_expected += expected
+            total_entries += 1
 
-            # Count patched patterns (any variant match adds to count;
-            # we count unique occurrences of the FIRST matching variant)
+            # Count patched patterns
             patched_count = 0
             for pp in entry["patched_patterns"]:
                 patched_count += content.count(pp)
@@ -346,34 +344,39 @@ def scan_patch_points(py_scripts):
             for op in entry["original_patterns"]:
                 original_count += content.count(op)
 
-            if patched_count >= expected and original_count == 0:
+            # --- Classification ---
+            # IMPORTANT: patched_count takes priority.  Do NOT check
+            # original_count == 0 as a gate for PATCHED — the original
+            # snippet is often a substring of the patched version
+            # (e.g. open(path,"r") inside open(path,"r", encoding=...)).
+            if patched_count >= expected:
                 lines.append("[PATCHED] %s - %s (%d/%d)"
                              % (label, comment, patched_count, expected))
                 total_patched += 1
-            elif patched_count > 0 and original_count > 0:
-                lines.append("[PARTIAL] %s - %s (patched %d, original %d, expected %d)"
-                             % (label, comment, patched_count, original_count, expected))
+            elif patched_count > 0:
+                # patched_count < expected — some patched, some not
+                if original_count > 0:
+                    lines.append("[PARTIAL] %s - %s (patched %d, original %d, expected %d)"
+                                 % (label, comment, patched_count, original_count, expected))
+                else:
+                    lines.append("[PARTIAL] %s - %s (patched %d, expected %d)"
+                                 % (label, comment, patched_count, expected))
                 total_partial += 1
-            elif original_count > 0 and patched_count == 0:
+            elif original_count > 0:
                 lines.append("[UNPATCHED] %s - %s (original %d, expected %d)"
                              % (label, comment, original_count, expected))
                 total_unpatched += 1
-            elif patched_count == 0 and original_count == 0:
+            else:
                 lines.append("[UNKNOWN] %s - %s (no patterns matched)"
                              % (label, comment))
                 total_unknown += 1
-            else:
-                # patched_count > 0 but < expected, and no originals
-                lines.append("[PARTIAL] %s - %s (patched %d, expected %d)"
-                             % (label, comment, patched_count, expected))
-                total_partial += 1
 
     counts = {
         "patched": total_patched,
         "unpatched": total_unpatched,
         "partial": total_partial,
         "unknown": total_unknown,
-        "expected": total_expected,
+        "total_entries": total_entries,
     }
     return lines, counts
 
@@ -470,8 +473,14 @@ def build_short_summary(version_string, version_ok, blender_status_short, patch_
         "  %s\n"
         "\n"
         "Patch status:\n"
-        "  %s (%d/%d entries patched)\n"
+        "  %s\n"
+        "\n"
+        "Patch points:\n"
+        "  %d/%d entries patched\n"
         "%s"
+        "\n"
+        "Issues found:\n"
+        "  %d\n"
         "\n"
         "Backups found:\n"
         "  %d\n"
@@ -487,8 +496,10 @@ def build_short_summary(version_string, version_ok, blender_status_short, patch_
         version_string,
         compat,
         blender_status_short,
-        patch_status_short, patch_counts.get("patched", 0), patch_counts.get("expected", 0),
+        patch_status_short,
+        patch_counts.get("patched", 0), patch_counts.get("total_entries", 0),
         issues_line,
+        issue_count,
         backup_count,
         existence_errors,
         action,
@@ -502,12 +513,15 @@ def build_summary(version_string, version_ok, blender_lines, patch_counts,
     compat = "SUPPORTED" if version_ok else ("UNSUPPORTED" if version_string != "UNKNOWN" else "UNKNOWN")
 
     pc = patch_counts
-    if pc["patched"] == pc["expected"] and pc["unpatched"] == 0 and pc["partial"] == 0 and pc["unknown"] == 0:
+    total = pc.get("total_entries", 0)
+    if pc["patched"] == total and pc["unpatched"] == 0 and pc["partial"] == 0 and pc["unknown"] == 0:
         patch_status = "FULLY PATCHED"
-    elif pc["patched"] == 0 and pc["unpatched"] == pc["expected"] and pc["partial"] == 0 and pc["unknown"] == 0:
+    elif pc["patched"] == 0 and pc["unpatched"] > 0 and pc["partial"] == 0 and pc["unknown"] == 0:
         patch_status = "NOT PATCHED"
     elif pc["patched"] > 0 and (pc["unpatched"] > 0 or pc["partial"] > 0):
         patch_status = "PARTIALLY PATCHED"
+    elif pc["unknown"] > 0 or existence_errors > 0:
+        patch_status = "NEEDS REVIEW"
     else:
         patch_status = "UNKNOWN"
 
@@ -526,27 +540,39 @@ def build_summary(version_string, version_ok, blender_lines, patch_counts,
         action = "Unsupported 3DE version. Do NOT run the patcher."
     elif patch_status == "NOT PATCHED":
         action = "Run Fix_Exporters_UTF8.py to apply the patch."
-    elif patch_status == "PARTIALLY PATCHED":
+    elif patch_status == "PARTIALLY PATCHED" or patch_status == "NEEDS REVIEW":
         action = "Verify manually, or re-run Fix_Exporters_UTF8.py (idempotent)."
     else:
         action = "Run Fix_Exporters_UTF8.py if on R8.1. Use Rollback_UTF8_Patches.py to undo."
 
+    totals = (
+        "Patch point totals:\n"
+        "  PATCHED: %d\n"
+        "  UNPATCHED: %d\n"
+        "  PARTIAL: %d\n"
+        "  UNKNOWN: %d\n"
+        "  TOTAL: %d"
+    ) % (pc["patched"], pc["unpatched"], pc["partial"], pc["unknown"], total)
+
     return (
+        "%s\n"
+        "\n"
         "Summary:\n"
         "  3DE version: %s\n"
         "  Compatibility: %s\n"
         "  Blender legacy disabled: %s\n"
-        "  Patch status: %s (%d/%d entries patched)\n"
+        "  Patch status: %s\n"
         "  Backups found: %d\n"
         "  Files missing: %d\n"
         "\n"
         "Recommended action:\n"
         "  %s"
     ) % (
+        totals,
         version_string,
         compat,
         blender_status,
-        patch_status, pc["patched"], pc["expected"],
+        patch_status,
         backup_count,
         existence_errors,
         action,
@@ -573,7 +599,7 @@ def main():
     # --- Patch points ---
     if existence_errors == len(TARGET_FILES):
         patch_lines = ["[ERROR] All target files missing - cannot scan patch points."]
-        patch_counts = {"patched": 0, "unpatched": 0, "partial": 0, "unknown": 0, "expected": 0}
+        patch_counts = {"patched": 0, "unpatched": 0, "partial": 0, "unknown": 0, "total_entries": 0}
     else:
         patch_lines, patch_counts = scan_patch_points(py_scripts)
 
@@ -591,16 +617,21 @@ def main():
         blender_status_short = "UNKNOWN"
 
     pc = patch_counts
-    if pc["patched"] == pc["expected"] and pc["unpatched"] == 0 and pc["partial"] == 0 and pc["unknown"] == 0:
+    total = pc.get("total_entries", 0)
+    if pc["patched"] == total and pc["unpatched"] == 0 and pc["partial"] == 0 and pc["unknown"] == 0:
         patch_status_short = "FULLY PATCHED"
-    elif pc["patched"] == 0 and pc["unpatched"] == pc["expected"] and pc["partial"] == 0 and pc["unknown"] == 0:
+    elif pc["patched"] == 0 and pc["unpatched"] > 0 and pc["partial"] == 0 and pc["unknown"] == 0:
         patch_status_short = "NOT PATCHED"
     elif pc["patched"] > 0 and (pc["unpatched"] > 0 or pc["partial"] > 0):
         patch_status_short = "PARTIALLY PATCHED"
+    elif pc["unknown"] > 0 or existence_errors > 0:
+        patch_status_short = "NEEDS REVIEW"
     else:
         patch_status_short = "UNKNOWN"
 
-    issue_count = pc["unpatched"] + pc["partial"] + pc["unknown"] + existence_errors
+    issue_count = (pc["unpatched"] + pc["partial"] + pc["unknown"]
+                   + existence_errors
+                   + (1 if "still active" in " ".join(blender_lines) else 0))
 
     # --- Build full report for console ---
     summary_text = build_summary(version_string, version_ok, blender_lines,
