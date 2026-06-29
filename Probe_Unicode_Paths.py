@@ -121,10 +121,9 @@ def probe_path(test_path):
         lines.append("(no test path selected)")
         lines.append("")
         lines.append("To test a Chinese folder:")
-        lines.append("  copy a folder/file path in Windows Explorer,")
-        lines.append("  run the probe again and choose Clip mode.")
+        lines.append("  run the probe again and choose File mode,")
+        lines.append("  then select any file inside the target folder.")
         lines.append("")
-        lines.append("File mode can test the native 3DE requester.")
         lines.append("TEST_UNICODE_PATH is only a fallback.")
         return lines
 
@@ -401,104 +400,51 @@ def path_to_test_folder(path):
 def read_windows_clipboard_text():
     """
     Read Unicode text from the Windows clipboard using CF_UNICODETEXT.
-    All API functions have explicit argtypes/restype to avoid 64-bit
-    handle/pointer truncation.
-
     Returns (text, error_string).
     """
     if os.name != "nt":
         return None, "Windows clipboard mode is only supported on Windows"
-
     try:
         import ctypes
         from ctypes import wintypes
 
-        user32 = ctypes.WinDLL("user32", use_last_error=True)
-        kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
-
+        user32 = ctypes.windll.user32
+        kernel32 = ctypes.windll.kernel32
         CF_UNICODETEXT = 13
 
-        # --- Explicit prototypes (critical for 64-bit) ---
-        user32.OpenClipboard.argtypes = [wintypes.HWND]
-        user32.OpenClipboard.restype = wintypes.BOOL
-
-        user32.CloseClipboard.argtypes = []
-        user32.CloseClipboard.restype = wintypes.BOOL
-
-        user32.IsClipboardFormatAvailable.argtypes = [wintypes.UINT]
-        user32.IsClipboardFormatAvailable.restype = wintypes.BOOL
-
-        user32.GetClipboardData.argtypes = [wintypes.UINT]
-        user32.GetClipboardData.restype = wintypes.HANDLE
-
-        kernel32.GlobalLock.argtypes = [wintypes.HGLOBAL]
-        kernel32.GlobalLock.restype = wintypes.LPVOID
-
-        kernel32.GlobalUnlock.argtypes = [wintypes.HGLOBAL]
-        kernel32.GlobalUnlock.restype = wintypes.BOOL
-
-        kernel32.GlobalSize.argtypes = [wintypes.HGLOBAL]
-        kernel32.GlobalSize.restype = ctypes.c_size_t
-
         if not user32.OpenClipboard(None):
-            err = ctypes.get_last_error()
-            return None, "OpenClipboard failed, error=%s" % err
-
-        locked = False
-        handle = None
+            return None, "OpenClipboard failed"
 
         try:
-            if not user32.IsClipboardFormatAvailable(CF_UNICODETEXT):
-                return None, "Clipboard does not contain CF_UNICODETEXT"
-
             handle = user32.GetClipboardData(CF_UNICODETEXT)
             if not handle:
-                err = ctypes.get_last_error()
-                return None, "GetClipboardData failed, error=%s" % err
+                return None, "Clipboard does not contain Unicode text"
 
-            size_bytes = kernel32.GlobalSize(handle)
-            if not size_bytes:
-                err = ctypes.get_last_error()
-                return None, "GlobalSize failed or zero, error=%s" % err
-
+            kernel32.GlobalLock.restype = ctypes.c_void_p
             ptr = kernel32.GlobalLock(handle)
             if not ptr:
-                err = ctypes.get_last_error()
-                return None, "GlobalLock failed, error=%s" % err
+                return None, "GlobalLock failed"
 
-            locked = True
+            try:
+                text = ctypes.wstring_at(ptr)
+            finally:
+                kernel32.GlobalUnlock(handle)
 
-            # CF_UNICODETEXT is UTF-16LE, null-terminated.
-            # size_bytes includes the terminating null bytes.
-            max_chars = int(size_bytes // ctypes.sizeof(ctypes.c_wchar))
-            if max_chars <= 0:
-                return None, "Clipboard Unicode text size is zero"
+            if text is None:
+                return None, "Clipboard text is None"
 
-            text = ctypes.wstring_at(ptr, max_chars)
-
-            # Strip trailing nulls
-            text = text.split("\x00", 1)[0]
             text = text.strip()
-
             if not text:
-                return None, "Clipboard Unicode text is empty"
+                return None, "Clipboard text is empty"
 
             return text, None
 
         finally:
-            if locked and handle:
-                try:
-                    kernel32.GlobalUnlock(handle)
-                except Exception:
-                    pass
-            try:
-                user32.CloseClipboard()
-            except Exception:
-                pass
+            user32.CloseClipboard()
 
     except Exception as exc:
         traceback.print_exc()
-        return None, "%s: %s" % (exc.__class__.__name__, exc)
+        return None, str(exc)
 
 
 def ask_clipboard_path():

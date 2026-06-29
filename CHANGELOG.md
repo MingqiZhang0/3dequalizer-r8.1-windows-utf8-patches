@@ -35,9 +35,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - File requester UnicodeDecodeError is now reported as "Requester
   path selection failed" instead of being confused with Python
   filesystem access failure.
-- `Probe_Unicode_Paths.py` Clipboard mode now declares Windows
-  clipboard API handle and pointer types explicitly to avoid
-  64-bit `ctypes` pointer truncation / access violation failures.
 
 ### Planned
 
