@@ -312,15 +312,14 @@ PATCH_TABLE = [
             },
             {
                 "comment": "main() lines 3031,3140,3158 - re-executes self (3 occurrences); "
-                           "accepts both single-line inline encoding and multi-line with-block",
+                           "real R8.1 Maya source uses with-open-as-f",
                 "already_patched": [
-                    "open(script_path, encoding='utf-8', errors='replace')",
-                    'open(script_path, "r", encoding="utf-8", errors="replace")',
+                    'with open(script_path, "r", encoding="utf-8", errors="replace") as f:',
                 ],
                 "originals": [
-                    "exec(open(script_path).read())",
+                    'with open(script_path) as f:',
                 ],
-                "replacement": "exec(open(script_path, encoding='utf-8', errors='replace').read())",
+                "replacement": 'with open(script_path, "r", encoding="utf-8", errors="replace") as f:',
                 "expected_count": 3,
             },
         ],

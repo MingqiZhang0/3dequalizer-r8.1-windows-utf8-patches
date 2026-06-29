@@ -166,13 +166,13 @@ STATUS_TABLE = [
                 "expected_count": 1,
             },
             {
-                "comment": "main() lines 3031,3140,3158 - re-executes self (x3)",
+                "comment": "main() lines 3031,3140,3158 - re-executes self (x3); "
+                           "real R8.1 Maya source uses with-open-as-f",
                 "patched_patterns": [
-                    "open(script_path, encoding='utf-8', errors='replace')",
-                    'open(script_path, "r", encoding="utf-8", errors="replace")',
+                    'with open(script_path, "r", encoding="utf-8", errors="replace") as f:',
                 ],
                 "original_patterns": [
-                    "exec(open(script_path).read())",
+                    'with open(script_path) as f:',
                 ],
                 "expected_count": 3,
             },
