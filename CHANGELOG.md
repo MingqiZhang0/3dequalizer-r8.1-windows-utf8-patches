@@ -87,6 +87,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   allows the user to proceed (for undoing a previous patch run).
 - Confirmation dialog now shows the detected 3DE version and
   supported status.
+- `Scan_Exporters_UTF8_Status.py` — a read-only diagnostic scanner
+  for patch status, version compatibility, Blender legacy script
+  state, and backup file presence.
 
 ### Planned
 - Directory restructuring (`scripts/`, `legacy/`, `docs/`).

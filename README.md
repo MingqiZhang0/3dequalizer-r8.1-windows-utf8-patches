@@ -52,6 +52,7 @@ This repository addresses two issues with 3DEqualizer4 R8.1 on Chinese Windows
 |------|------|--------|
 | `Fix_Exporters_UTF8.py` | **Main patch** — fixes Blender name collision + UTF-8 encoding in Blender, Maya, Piggyback Camera, and Flame Matchbox exporters (4 files). Uses exact-match replacement table. Run this one. | ✅ **Use this** |
 | `Rollback_UTF8_Patches.py` | **Rollback** — restores all `.encoding_backup` files and moves the disabled `export_blender.py` back. | ↩ Use if needed |
+| `Scan_Exporters_UTF8_Status.py` | **Read-only scanner** — checks current patch status, version compatibility, Blender legacy script state, and backup files. Does not modify files. | 🔍 Optional preflight / diagnosis |
 | `Fix_Blender_Export.py` | **Legacy / Blender-only helper** — Blender fix only. Superseded by `Fix_Exporters_UTF8.py`. Kept for reference. | ⛔ Do not use as default entry point |
 
 ## Tested Environment
@@ -127,6 +128,21 @@ script contents. Applying to a different version may corrupt your files.
 If you need to undo a previous patch run on a non-R8.1 installation,
 use `Rollback_UTF8_Patches.py` instead — it displays a warning but allows
 you to proceed.
+
+### Optional: Scan Current Status
+
+Before or after applying the patch, you can run
+`Scan_Exporters_UTF8_Status.py` inside 3DEqualizer4
+(Main Window > Python > Run Script...).
+
+It is **read-only** and does not modify files. It reports:
+
+- detected 3DE version and patch compatibility;
+- whether the Blender legacy script is disabled;
+- whether each exporter patch point is patched, unpatched,
+  partial, or unknown;
+- whether `.encoding_backup` files exist;
+- a summary with recommended action.
 
 ## Affected Local Files
 

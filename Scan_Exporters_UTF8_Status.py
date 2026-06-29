@@ -1,0 +1,534 @@
+#
+#
+# 3DE4.script.name: Scan Exporters UTF-8 Patch Status
+#
+# 3DE4.script.version: v1.0
+#
+# 3DE4.script.gui: Main Window::Python
+#
+# 3DE4.script.comment: Read-only scanner for the 3DE4 R8.1 Windows UTF-8
+# 3DE4.script.comment: exporter patches.  Does not modify files.
+#
+
+"""
+Scan_Exporters_UTF8_Status.py
+=============================
+Read-only diagnostic scanner.  Reports:
+
+  - detected 3DE version and patch compatibility
+  - Blender legacy script status (active / disabled / missing)
+  - patch status for each exporter (PATCHED / UNPATCHED / PARTIAL / UNKNOWN)
+  - backup file (.encoding_backup) presence
+  - summary with recommended action
+
+This script does NOT modify any files.
+"""
+
+import os
+import tde4
+
+
+# ---------------------------------------------------------------------------
+# Version detection (same logic as Fix_Exporters_UTF8.py)
+# ---------------------------------------------------------------------------
+SUPPORTED_VERSION_MARKER = "Release 8.1"
+
+
+def get_3de_version_string():
+    """Return the 3DE version string, or 'UNKNOWN' on any failure."""
+    try:
+        if hasattr(tde4, "get3DEVersion"):
+            v = tde4.get3DEVersion()
+            if isinstance(v, str) and v.strip():
+                return v.strip()
+    except Exception:
+        pass
+    return "UNKNOWN"
+
+
+def is_supported_3de_version(version_string):
+    """Check if version_string indicates a supported 3DE release."""
+    if not version_string or version_string == "UNKNOWN":
+        return False
+    return SUPPORTED_VERSION_MARKER in version_string
+
+
+# ---------------------------------------------------------------------------
+# Paths
+# ---------------------------------------------------------------------------
+def get_install_path():
+    return tde4.get3DEInstallPath()
+
+
+def get_py_scripts_dir():
+    return os.path.join(get_install_path(), "sys_data", "py_scripts")
+
+
+def get_disabled_dir():
+    return os.path.join(get_install_path(), "sys_data", "py_scripts_disabled")
+
+
+# ---------------------------------------------------------------------------
+# Status table (mirrors PATCH_TABLE from Fix_Exporters_UTF8.py, read-only)
+# ---------------------------------------------------------------------------
+STATUS_TABLE = [
+    # --- exportBlender.py ---
+    {
+        "file": "exportBlender.py",
+        "label": "Blender: exportBlender.py",
+        "entries": [
+            {
+                "comment": "getScriptVersion() line 98 - reads own script header",
+                "patched_patterns": [
+                    "open(os.sep.join([dirname, fname]), 'r', encoding='utf-8', errors='replace')",
+                ],
+                "original_patterns": [
+                    "open(os.sep.join([dirname, fname]), 'r')",
+                ],
+                "expected_count": 1,
+            },
+            {
+                "comment": "_preferences_editor() line 1014 - reads user prefs",
+                "patched_patterns": [
+                    "open(preferences_file, 'r', encoding='utf-8', errors='replace')",
+                ],
+                "original_patterns": [
+                    "open(preferences_file, 'r')",
+                ],
+                "expected_count": 1,
+            },
+            {
+                "comment": "read_preferences_file() line 1249 - reads user prefs",
+                "patched_patterns": [
+                    "open(os.sep.join([preferences_dir, file_name]), 'r', encoding='utf-8', errors='replace')",
+                ],
+                "original_patterns": [
+                    "open(os.sep.join([preferences_dir, file_name]), 'r')",
+                ],
+                "expected_count": 1,
+            },
+            {
+                "comment": "main() line 3834 - reads log file",
+                "patched_patterns": [
+                    "open(log, 'r', encoding='utf-8', errors='replace')",
+                ],
+                "original_patterns": [
+                    "open(log, 'r')",
+                ],
+                "expected_count": 1,
+            },
+            {
+                "comment": "main() lines 3749,3862,3881 - re-executes self (x3)",
+                "patched_patterns": [
+                    "open(script_path, encoding='utf-8', errors='replace')",
+                ],
+                "original_patterns": [
+                    "exec(open(script_path).read())",
+                ],
+                "expected_count": 3,
+            },
+        ],
+    },
+
+    # --- export_maya.py ---
+    {
+        "file": "export_maya.py",
+        "label": "Maya: export_maya.py",
+        "entries": [
+            {
+                "comment": "read_preferences_file() line 2309 - reads user prefs",
+                "patched_patterns": [
+                    "open(os.sep.join([preferences_dir, file_name]), 'r', encoding='utf-8', errors='replace')",
+                ],
+                "original_patterns": [
+                    "open(os.sep.join([preferences_dir, file_name]), 'r')",
+                ],
+                "expected_count": 1,
+            },
+            {
+                "comment": "_preferences_editor() line 2655 - reads user prefs",
+                "patched_patterns": [
+                    "open(preferences_file, 'r', encoding='utf-8', errors='replace')",
+                ],
+                "original_patterns": [
+                    "open(preferences_file, 'r')",
+                ],
+                "expected_count": 1,
+            },
+            {
+                "comment": "main() line 3112 - reads log file",
+                "patched_patterns": [
+                    "open(log, 'r', encoding='utf-8', errors='replace')",
+                ],
+                "original_patterns": [
+                    "open(log, 'r')",
+                ],
+                "expected_count": 1,
+            },
+            {
+                "comment": "main() lines 3031,3140,3158 - re-executes self (x3)",
+                "patched_patterns": [
+                    "open(script_path, encoding='utf-8', errors='replace')",
+                    'open(script_path, "r", encoding="utf-8", errors="replace")',
+                ],
+                "original_patterns": [
+                    "exec(open(script_path).read())",
+                ],
+                "expected_count": 3,
+            },
+        ],
+    },
+
+    # --- calcMainCameraViaPiggybackCamera.py ---
+    {
+        "file": "calcMainCameraViaPiggybackCamera.py",
+        "label": "Piggyback: calcMainCameraViaPiggybackCamera.py",
+        "entries": [
+            {
+                "comment": "importCalibration() line 1134 - user calibration data",
+                "patched_patterns": [
+                    'open(path,"r", encoding=\'utf-8\')',
+                ],
+                "original_patterns": [
+                    'open(path,"r", encoding=\'utf-8\', errors=\'replace\')',
+                    'open(path,"r")',
+                ],
+                "expected_count": 1,
+            },
+        ],
+    },
+
+    # --- export_flame_LD_3DE4_batch.py ---
+    {
+        "file": "export_flame_LD_3DE4_batch.py",
+        "label": "Flame: export_flame_LD_3DE4_batch.py",
+        "entries": [
+            {
+                "comment": "create_resize_node_add_margin() line 813 - XML template",
+                "patched_patterns": [
+                    'open(path,"r", encoding=\'utf-8\', errors=\'replace\')',
+                ],
+                "original_patterns": [
+                    'open(path,"r")',
+                ],
+                "expected_count": 1,
+            },
+            {
+                "comment": "create_resize_node_remove_margin() line 829 - XML template",
+                "patched_patterns": [
+                    'open(path,"r", encoding=\'utf-8\', errors=\'replace\')',
+                ],
+                "original_patterns": [
+                    'open(path,"r")',
+                ],
+                "expected_count": 1,
+            },
+            {
+                "comment": "create_root_node() line 845 - XML template",
+                "patched_patterns": [
+                    'open(path,"r", encoding=\'utf-8\', errors=\'replace\')',
+                ],
+                "original_patterns": [
+                    'open(path,"r")',
+                ],
+                "expected_count": 1,
+            },
+            {
+                "comment": "batch export line 862 - batch template",
+                "patched_patterns": [
+                    'open(os.path.join(self._tde4_flame_path,"pipeline.batch.template.xml"),"r", encoding=\'utf-8\', errors=\'replace\')',
+                ],
+                "original_patterns": [
+                    'open(os.path.join(self._tde4_flame_path,"pipeline.batch.template.xml"),"r")',
+                ],
+                "expected_count": 1,
+            },
+            {
+                "comment": "fingerprint check line 1038 - fingerprint file",
+                "patched_patterns": [
+                    'open(os.path.join(path,"fingerprint"),"r", encoding=\'utf-8\', errors=\'replace\')',
+                ],
+                "original_patterns": [
+                    'open(os.path.join(path,"fingerprint"),"r")',
+                ],
+                "expected_count": 1,
+            },
+        ],
+    },
+]
+
+# Files expected to have patches applied
+TARGET_FILES = [
+    "exportBlender.py",
+    "export_maya.py",
+    "calcMainCameraViaPiggybackCamera.py",
+    "export_flame_LD_3DE4_batch.py",
+]
+
+
+# ---------------------------------------------------------------------------
+# Scanner logic
+# ---------------------------------------------------------------------------
+def scan_blender_legacy(py_scripts):
+    """Check Blender legacy script status.  Returns list of report lines."""
+    lines = []
+    active = os.path.join(py_scripts, "export_blender.py")
+    disabled = os.path.join(get_disabled_dir(), "export_blender.py.bak")
+    legacy_bak = os.path.join(py_scripts, "export_blender.py.bak")
+
+    has_active = os.path.isfile(active)
+    has_disabled = os.path.isfile(disabled)
+    has_legacy = os.path.isfile(legacy_bak)
+
+    if has_disabled and not has_active:
+        lines.append("[OK] Blender legacy script disabled - py_scripts_disabled/export_blender.py.bak exists")
+    elif has_active and not has_disabled:
+        lines.append("[WARN] Blender legacy script still active - py_scripts/export_blender.py exists")
+        lines.append("       Blender exporter menu collision may still exist.")
+    elif has_active and has_disabled:
+        lines.append("[WARN] Both active and disabled legacy Blender scripts exist.")
+        lines.append("       Please verify manually.")
+    else:
+        lines.append("[SKIP] No legacy export_blender.py found (active or disabled).")
+
+    if has_legacy:
+        lines.append("[INFO] Legacy in-place backup found - py_scripts/export_blender.py.bak exists")
+
+    return lines
+
+
+def scan_file_existence(py_scripts):
+    """Check that all four target files exist.  Returns list of report lines."""
+    lines = []
+    for fname in TARGET_FILES:
+        path = os.path.join(py_scripts, fname)
+        if not os.path.isfile(path):
+            lines.append("[ERROR] Missing file: %s" % fname)
+    if not lines:
+        lines.append("[OK] All 4 target exporter files present.")
+    return lines
+
+
+def scan_patch_points(py_scripts):
+    """Check each patch point.  Returns (lines, summary_counts)."""
+    lines = []
+    total_patched = 0
+    total_unpatched = 0
+    total_partial = 0
+    total_unknown = 0
+    total_expected = 0
+
+    for group in STATUS_TABLE:
+        fname = group["file"]
+        label = group["label"]
+        path = os.path.join(py_scripts, fname)
+
+        if not os.path.isfile(path):
+            # Already reported in scan_file_existence; skip here
+            continue
+
+        with open(path, "r", encoding="utf-8", errors="replace") as f:
+            content = f.read()
+
+        for entry in group["entries"]:
+            comment = entry["comment"]
+            expected = entry.get("expected_count", 1)
+            total_expected += expected
+
+            # Count patched patterns (any variant match adds to count;
+            # we count unique occurrences of the FIRST matching variant)
+            patched_count = 0
+            for pp in entry["patched_patterns"]:
+                patched_count += content.count(pp)
+
+            # Count original (unpatched) patterns
+            original_count = 0
+            for op in entry["original_patterns"]:
+                original_count += content.count(op)
+
+            if patched_count >= expected and original_count == 0:
+                lines.append("[PATCHED] %s - %s (%d/%d)"
+                             % (label, comment, patched_count, expected))
+                total_patched += 1
+            elif patched_count > 0 and original_count > 0:
+                lines.append("[PARTIAL] %s - %s (patched %d, original %d, expected %d)"
+                             % (label, comment, patched_count, original_count, expected))
+                total_partial += 1
+            elif original_count > 0 and patched_count == 0:
+                lines.append("[UNPATCHED] %s - %s (original %d, expected %d)"
+                             % (label, comment, original_count, expected))
+                total_unpatched += 1
+            elif patched_count == 0 and original_count == 0:
+                lines.append("[UNKNOWN] %s - %s (no patterns matched)"
+                             % (label, comment))
+                total_unknown += 1
+            else:
+                # patched_count > 0 but < expected, and no originals
+                lines.append("[PARTIAL] %s - %s (patched %d, expected %d)"
+                             % (label, comment, patched_count, expected))
+                total_partial += 1
+
+    counts = {
+        "patched": total_patched,
+        "unpatched": total_unpatched,
+        "partial": total_partial,
+        "unknown": total_unknown,
+        "expected": total_expected,
+    }
+    return lines, counts
+
+
+def scan_backups(py_scripts):
+    """Check for .encoding_backup files.  Returns list of report lines."""
+    lines = []
+    found = 0
+    for fname in TARGET_FILES:
+        bak = os.path.join(py_scripts, fname + ".encoding_backup")
+        if os.path.isfile(bak):
+            lines.append("[INFO] Backup exists: %s.encoding_backup" % fname)
+            found += 1
+        else:
+            lines.append("[INFO] Backup missing: %s.encoding_backup" % fname)
+    if found == 0:
+        lines.append("       (Missing backups are normal if no files were modified.)")
+    return lines, found
+
+
+def build_summary(version_string, version_ok, blender_lines, patch_counts, backup_count,
+                  existence_errors):
+    """Build the final summary and recommended action."""
+    compat = "SUPPORTED" if version_ok else ("UNSUPPORTED" if version_string != "UNKNOWN" else "UNKNOWN")
+
+    # Determine overall patch status
+    pc = patch_counts
+    if pc["patched"] == pc["expected"] and pc["unpatched"] == 0 and pc["partial"] == 0 and pc["unknown"] == 0:
+        patch_status = "FULLY PATCHED"
+    elif pc["patched"] == 0 and pc["unpatched"] == pc["expected"] and pc["partial"] == 0 and pc["unknown"] == 0:
+        patch_status = "NOT PATCHED"
+    elif pc["patched"] > 0 and pc["unpatched"] > 0 or pc["partial"] > 0:
+        patch_status = "PARTIALLY PATCHED"
+    else:
+        patch_status = "UNKNOWN"
+
+    # Determine Blender legacy status
+    has_active_warn = any("still active" in l for l in blender_lines)
+    has_disabled_ok = any("legacy script disabled" in l for l in blender_lines)
+    if has_disabled_ok and not has_active_warn:
+        blender_status = "YES (disabled)"
+    elif has_active_warn:
+        blender_status = "NO (active - collision risk)"
+    else:
+        blender_status = "UNKNOWN"
+
+    # Recommended action
+    if patch_status == "FULLY PATCHED" and blender_status.startswith("YES"):
+        action = "No action needed. Your installation is fully patched."
+    elif not version_ok:
+        action = "Unsupported 3DE version. Do NOT run the patcher."
+    elif patch_status == "NOT PATCHED":
+        action = "Run Fix_Exporters_UTF8.py to apply the patch."
+    elif patch_status == "PARTIALLY PATCHED":
+        action = "Verify manually, or re-run Fix_Exporters_UTF8.py (idempotent)."
+    else:
+        action = "Run Fix_Exporters_UTF8.py if on R8.1. Use Rollback_UTF8_Patches.py to undo."
+
+    summary = (
+        "Summary:\n"
+        "  3DE version: %s\n"
+        "  Compatibility: %s\n"
+        "  Blender legacy disabled: %s\n"
+        "  Patch status: %s (%d/%d entries patched)\n"
+        "  Backups found: %d\n"
+        "  Files missing: %d\n"
+        "\n"
+        "Recommended action:\n"
+        "  %s"
+    ) % (
+        version_string,
+        compat,
+        blender_status,
+        patch_status, pc["patched"], pc["expected"],
+        backup_count,
+        existence_errors,
+        action,
+    )
+    return summary
+
+
+# ---------------------------------------------------------------------------
+# Main
+# ---------------------------------------------------------------------------
+def main():
+    py_scripts = get_py_scripts_dir()
+
+    version_string = get_3de_version_string()
+    version_ok = is_supported_3de_version(version_string)
+    compat_label = "SUPPORTED" if version_ok else ("UNSUPPORTED" if version_string != "UNKNOWN" else "UNKNOWN")
+
+    report = []
+
+    # --- Header ---
+    report.append("Scan Exporters UTF-8 Patch Status")
+    report.append("=" * 40)
+    report.append("")
+    report.append("Detected 3DE version:")
+    report.append("  %s" % version_string)
+    report.append("")
+    report.append("Patch compatibility:")
+    report.append("  %s" % compat_label)
+    report.append("")
+    report.append("Note:")
+    report.append("  This scanner is read-only.")
+    report.append("  The patcher should only be applied to")
+    report.append("  3DEqualizer4 Release 8.1.")
+    report.append("")
+
+    # --- Blender legacy ---
+    report.append("-" * 40)
+    report.append("Blender Legacy Script Status:")
+    blender_lines = scan_blender_legacy(py_scripts)
+    report.extend(blender_lines)
+    report.append("")
+
+    # --- File existence ---
+    report.append("-" * 40)
+    report.append("Target File Existence:")
+    existence_lines = scan_file_existence(py_scripts)
+    report.extend(existence_lines)
+    existence_errors = sum(1 for l in existence_lines if l.startswith("[ERROR]"))
+    report.append("")
+
+    # --- Patch points ---
+    report.append("-" * 40)
+    report.append("Patch Point Status:")
+    if existence_errors == len(TARGET_FILES):
+        report.append("[ERROR] All target files missing - cannot scan patch points.")
+        patch_counts = {"patched": 0, "unpatched": 0, "partial": 0, "unknown": 0, "expected": 0}
+    else:
+        patch_lines, patch_counts = scan_patch_points(py_scripts)
+        report.extend(patch_lines)
+    report.append("")
+
+    # --- Backups ---
+    report.append("-" * 40)
+    report.append("Backup File Status:")
+    backup_lines, backup_count = scan_backups(py_scripts)
+    report.extend(backup_lines)
+    report.append("")
+
+    # --- Summary ---
+    report.append("-" * 40)
+    summary = build_summary(version_string, version_ok, blender_lines,
+                            patch_counts, backup_count, existence_errors)
+    report.append(summary)
+
+    # --- Display ---
+    tde4.postQuestionRequester(
+        "Scan Exporters UTF-8 Status - Done",
+        "\n".join(report),
+        "Ok",
+    )
+
+
+if __name__ == "__main__":
+    main()
