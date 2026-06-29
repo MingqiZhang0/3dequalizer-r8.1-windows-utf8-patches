@@ -238,48 +238,59 @@ _CANDIDATES_CACHE = None
 _ROOT_PRINTED = False
 
 
-def resolve_toolkit_root():
+def _maybe_print_root(root):
+    """Print the resolved root path once per script execution."""
+    global _ROOT_PRINTED
+    if not root or _ROOT_PRINTED:
+        return
+    print("[INFO] Toolkit root resolved:")
+    print("       %s" % root)
+    _ROOT_PRINTED = True
+
+
+def resolve_toolkit_root(log_success=False):
     """
     Locate the repository root directory.
 
     Caches the result after first successful resolution.
+    Set log_success=True to allow a one-time console print.
+
     Returns (root_path, checked_dirs) where root_path may be None.
     """
-    global _ROOT_CACHE, _CANDIDATES_CACHE, _ROOT_PRINTED
+    global _ROOT_CACHE, _CANDIDATES_CACHE
 
     # Return cached result if we already resolved successfully.
     if _ROOT_CACHE is not None:
+        if log_success:
+            _maybe_print_root(_ROOT_CACHE)
         return _ROOT_CACHE, (_CANDIDATES_CACHE or [])
 
     candidates = collect_candidate_dirs()
-    _CANDIDATES_CACHE = candidates
 
     # If override is set but invalid, warn in console and continue search.
     override = TOOLKIT_ROOT_OVERRIDE.strip()
     if override:
         if is_toolkit_root(override):
             _ROOT_CACHE = os.path.abspath(override)
-            if not _ROOT_PRINTED:
-                print("[INFO] Toolkit root resolved via TOOLKIT_ROOT_OVERRIDE:")
-                print("       %s" % _ROOT_CACHE)
-                _ROOT_PRINTED = True
+            _CANDIDATES_CACHE = candidates
+            if log_success:
+                _maybe_print_root(_ROOT_CACHE)
             return _ROOT_CACHE, candidates
         else:
-            if not _ROOT_PRINTED:
-                print("[WARN] TOOLKIT_ROOT_OVERRIDE is set but is not a valid toolkit root:")
-                print("       %s" % override)
-                print("       Continuing automatic search...")
+            print("[WARN] TOOLKIT_ROOT_OVERRIDE is set but is not a valid toolkit root:")
+            print("       %s" % override)
+            print("       Continuing automatic search...")
 
     for c in candidates:
         if is_toolkit_root(c):
             _ROOT_CACHE = c
-            if not _ROOT_PRINTED:
-                print("[INFO] Toolkit root resolved:")
-                print("       %s" % c)
-                _ROOT_PRINTED = True
+            _CANDIDATES_CACHE = candidates
+            if log_success:
+                _maybe_print_root(_ROOT_CACHE)
             return c, candidates
 
     # Don't cache failures - allow retry on next call
+    _CANDIDATES_CACHE = candidates
     return None, candidates
 
 
@@ -352,7 +363,7 @@ def run_tool_script(name):
     """
     fname = TOOL_SCRIPTS.get(name, name)
 
-    root_dir, candidates = resolve_toolkit_root()
+    root_dir, candidates = resolve_toolkit_root(log_success=True)
     if not root_dir:
         show_root_not_found_error(fname, candidates)
         return False
