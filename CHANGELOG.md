@@ -109,6 +109,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
     3DEqualizer4 `Run Script...`;
   - moved detailed documentation to `docs/`;
   - moved legacy Blender-only helper to `legacy/`.
+- Polished v0.2.0 documentation and runtime wording:
+  - repository layout now lists all five root runnable tools;
+  - Piggyback Camera documentation now matches strict UTF-8 behavior
+    without `errors='replace'`;
+  - requester/report text avoids non-ASCII punctuation where it may
+    appear in 3DE4 UI;
+  - scanner summary wording consistent between popup and console.
 
 ### Planned
 - Directory restructuring (`scripts/`, `legacy/`, `docs/`).

@@ -22,7 +22,7 @@ FIX_LOG = []
 
 
 # ---------------------------------------------------------------------------
-# Version guard — this patch is version-locked to 3DE4 R8.1
+# Version guard - this patch is version-locked to 3DE4 R8.1
 # ---------------------------------------------------------------------------
 SUPPORTED_VERSION_MARKER = "Release 8.1"
 
@@ -57,7 +57,7 @@ def get_disabled_dir():
 
 
 # ---------------------------------------------------------------------------
-# Fix 1: Blender name collision — move old export_blender.py out of py_scripts
+# Fix 1: Blender name collision - move old export_blender.py out of py_scripts
 # ---------------------------------------------------------------------------
 def fix_blender_name_collision(py_scripts):
     disabled = get_disabled_dir()
@@ -81,19 +81,19 @@ def fix_blender_name_collision(py_scripts):
 # ---------------------------------------------------------------------------
 #
 # Each entry has:
-#   comment         — human explanation of which function / what data
-#   already_patched — list of patterns; if ANY is found in file → SKIP
-#   originals       — list of original unpatched patterns (checked in order,
+#   comment         - human explanation of which function / what data
+#   already_patched - list of patterns; if ANY is found in file -> SKIP
+#   originals       - list of original unpatched patterns (checked in order,
 #                     most-specific first to avoid substring false positives)
-#   replacement     — what to substitute for the matched original
+#   replacement     - what to substitute for the matched original
 #
 # Risk categories (documentation only, not used by the engine):
-#   header    — reading script's own header (version/name)
-#   prefs     — reading user preferences file
-#   log       — reading log output
-#   template  — reading 3DE internal XML/HTML templates
-#   self-exec — re-executing the script itself
-#   user-data — reading user-supplied data files (calibration, etc.)
+#   header    - reading script's own header (version/name)
+#   prefs     - reading user preferences file
+#   log       - reading log output
+#   template  - reading 3DE internal XML/HTML templates
+#   self-exec - re-executing the script itself
+#   user-data - reading user-supplied data files (calibration, etc.)
 # ---------------------------------------------------------------------------
 
 PATCH_TABLE = [
@@ -105,7 +105,7 @@ PATCH_TABLE = [
         "label": "Blender: exportBlender.py",
         "entries": [
             {
-                "comment": "getScriptVersion() line 98 — reads own script header",
+                "comment": "getScriptVersion() line 98 - reads own script header",
                 "already_patched": [
                     "open(os.sep.join([dirname, fname]), 'r', encoding='utf-8', errors='replace')",
                 ],
@@ -115,7 +115,7 @@ PATCH_TABLE = [
                 "replacement": "open(os.sep.join([dirname, fname]), 'r', encoding='utf-8', errors='replace')",
             },
             {
-                "comment": "_preferences_editor() line 1014 — reads user prefs",
+                "comment": "_preferences_editor() line 1014 - reads user prefs",
                 "already_patched": [
                     "open(preferences_file, 'r', encoding='utf-8', errors='replace')",
                 ],
@@ -125,7 +125,7 @@ PATCH_TABLE = [
                 "replacement": "open(preferences_file, 'r', encoding='utf-8', errors='replace')",
             },
             {
-                "comment": "read_preferences_file() line 1249 — reads user prefs",
+                "comment": "read_preferences_file() line 1249 - reads user prefs",
                 "already_patched": [
                     "open(os.sep.join([preferences_dir, file_name]), 'r', encoding='utf-8', errors='replace')",
                 ],
@@ -135,7 +135,7 @@ PATCH_TABLE = [
                 "replacement": "open(os.sep.join([preferences_dir, file_name]), 'r', encoding='utf-8', errors='replace')",
             },
             {
-                "comment": "main() line 3834 — reads log file",
+                "comment": "main() line 3834 - reads log file",
                 "already_patched": [
                     "open(log, 'r', encoding='utf-8', errors='replace')",
                 ],
@@ -145,7 +145,7 @@ PATCH_TABLE = [
                 "replacement": "open(log, 'r', encoding='utf-8', errors='replace')",
             },
             {
-                "comment": "main() lines 3749,3862,3881 — re-executes self (3 occurrences)",
+                "comment": "main() lines 3749,3862,3881 - re-executes self (3 occurrences)",
                 "already_patched": [
                     "open(script_path, encoding='utf-8', errors='replace')",
                 ],
@@ -165,7 +165,7 @@ PATCH_TABLE = [
         "label": "Maya: export_maya.py",
         "entries": [
             {
-                "comment": "read_preferences_file() line 2309 — reads user prefs",
+                "comment": "read_preferences_file() line 2309 - reads user prefs",
                 "already_patched": [
                     "open(os.sep.join([preferences_dir, file_name]), 'r', encoding='utf-8', errors='replace')",
                 ],
@@ -175,7 +175,7 @@ PATCH_TABLE = [
                 "replacement": "open(os.sep.join([preferences_dir, file_name]), 'r', encoding='utf-8', errors='replace')",
             },
             {
-                "comment": "_preferences_editor() line 2655 — reads user prefs",
+                "comment": "_preferences_editor() line 2655 - reads user prefs",
                 "already_patched": [
                     "open(preferences_file, 'r', encoding='utf-8', errors='replace')",
                 ],
@@ -185,7 +185,7 @@ PATCH_TABLE = [
                 "replacement": "open(preferences_file, 'r', encoding='utf-8', errors='replace')",
             },
             {
-                "comment": "main() line 3112 — reads log file",
+                "comment": "main() line 3112 - reads log file",
                 "already_patched": [
                     "open(log, 'r', encoding='utf-8', errors='replace')",
                 ],
@@ -195,7 +195,7 @@ PATCH_TABLE = [
                 "replacement": "open(log, 'r', encoding='utf-8', errors='replace')",
             },
             {
-                "comment": "main() lines 3031,3140,3158 — re-executes self (3 occurrences); "
+                "comment": "main() lines 3031,3140,3158 - re-executes self (3 occurrences); "
                            "accepts both single-line inline encoding and multi-line with-block",
                 "already_patched": [
                     "open(script_path, encoding='utf-8', errors='replace')",
@@ -224,13 +224,13 @@ PATCH_TABLE = [
         "label": "Piggyback: calcMainCameraViaPiggybackCamera.py",
         "entries": [
             {
-                "comment": "importCalibration() line 1134 — USER calibration data; strict UTF-8",
+                "comment": "importCalibration() line 1134 - USER calibration data; strict UTF-8",
                 "already_patched": [
-                    # Already strict (ideal state) — both quote variants
+                    # Already strict (ideal state) - both quote variants
                     'open(path,"r", encoding=\'utf-8\')',
                 ],
                 "originals": [
-                    # Most-specific first: old patch with errors='replace' → upgrade
+                    # Most-specific first: old patch with errors='replace' -> upgrade
                     'open(path,"r", encoding=\'utf-8\', errors=\'replace\')',
                     # Unpatched original
                     'open(path,"r")',
@@ -248,7 +248,7 @@ PATCH_TABLE = [
         "label": "Flame: export_flame_LD_3DE4_batch.py",
         "entries": [
             {
-                "comment": "create_resize_node_add_margin() line 813 — XML template",
+                "comment": "create_resize_node_add_margin() line 813 - XML template",
                 "already_patched": [
                     'open(path,"r", encoding=\'utf-8\', errors=\'replace\')',
                 ],
@@ -258,7 +258,7 @@ PATCH_TABLE = [
                 "replacement": 'open(path,"r", encoding=\'utf-8\', errors=\'replace\')',
             },
             {
-                "comment": "create_resize_node_remove_margin() line 829 — XML template",
+                "comment": "create_resize_node_remove_margin() line 829 - XML template",
                 "already_patched": [
                     'open(path,"r", encoding=\'utf-8\', errors=\'replace\')',
                 ],
@@ -268,7 +268,7 @@ PATCH_TABLE = [
                 "replacement": 'open(path,"r", encoding=\'utf-8\', errors=\'replace\')',
             },
             {
-                "comment": "create_root_node() line 845 — XML template",
+                "comment": "create_root_node() line 845 - XML template",
                 "already_patched": [
                     'open(path,"r", encoding=\'utf-8\', errors=\'replace\')',
                 ],
@@ -278,7 +278,7 @@ PATCH_TABLE = [
                 "replacement": 'open(path,"r", encoding=\'utf-8\', errors=\'replace\')',
             },
             {
-                "comment": "batch export line 862 — batch template (different path arg)",
+                "comment": "batch export line 862 - batch template (different path arg)",
                 "already_patched": [
                     'open(os.path.join(self._tde4_flame_path,"pipeline.batch.template.xml"),"r", encoding=\'utf-8\', errors=\'replace\')',
                 ],
@@ -288,7 +288,7 @@ PATCH_TABLE = [
                 "replacement": 'open(os.path.join(self._tde4_flame_path,"pipeline.batch.template.xml"),"r", encoding=\'utf-8\', errors=\'replace\')',
             },
             {
-                "comment": "fingerprint check line 1038 — fingerprint file (different path arg)",
+                "comment": "fingerprint check line 1038 - fingerprint file (different path arg)",
                 "already_patched": [
                     'open(os.path.join(path,"fingerprint"),"r", encoding=\'utf-8\', errors=\'replace\')',
                 ],
@@ -327,10 +327,10 @@ def apply_patch_table(entry):
     Apply every fix-entry in *entry* to a single target file.
 
     For each fix-entry:
-      1. Check already_patched patterns — if ANY is in content → SKIP
-      2. Check originals (in order, most-specific first) — first match wins
-      3. Replace matched original with replacement → OK
-      4. If nothing matched → WARN
+      1. Check already_patched patterns - if ANY is in content -> SKIP
+      2. Check originals (in order, most-specific first) - first match wins
+      3. Replace matched original with replacement -> OK
+      4. If nothing matched -> WARN
 
     Backup is deferred until the first actual write (no backup if all SKIP).
 
@@ -420,7 +420,7 @@ def apply_patch_table(entry):
 
 def _find_nearby_hint(content, originals):
     """Try to find a line near any of the originals for diagnostic purposes."""
-    # Use the first original as a probe — look for a partial match
+    # Use the first original as a probe - look for a partial match
     probe = originals[0] if originals else ""
     # Take a short distinctive part of the probe
     short = probe[:min(30, len(probe))]
@@ -437,7 +437,7 @@ def _find_nearby_hint(content, originals):
 # Main
 # ---------------------------------------------------------------------------
 def main():
-    # -- Version check (MUST be first — abort before touching any file) --
+    # -- Version check (MUST be first - abort before touching any file) --
     version_string = get_3de_version_string()
     if not is_supported_3de_version(version_string):
         tde4.postQuestionRequester(

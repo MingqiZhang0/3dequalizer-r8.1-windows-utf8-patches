@@ -140,7 +140,7 @@ def restore_disabled_blender_script(py_scripts_dir):
     bak_file = os.path.join(disabled_dir, "export_blender.py.bak")
     target_file = os.path.join(py_scripts_dir, "export_blender.py")
 
-    # Case 1: target already exists -nothing to do
+    # Case 1: target already exists; nothing to do
     if os.path.isfile(target_file):
         ROLLBACK_LOG.append(
             "[SKIP] export_blender.py already exists in py_scripts/ -"
@@ -260,7 +260,7 @@ def main():
 
     if not backups and not has_disabled_blender:
         preview_lines.append(
-            "\nNothing to roll back -your installation\n"
+            "\nNothing to roll back; your installation\n"
             "appears to be in its original state."
         )
 
@@ -278,7 +278,7 @@ def main():
     # tde4.postQuestionRequester returns 1 for the first button ("Proceed"),
     # 2 for the second ("Cancel").  Anything else is treated as cancel.
     if result != 1:
-        ROLLBACK_LOG.append("[ABORT] Rollback cancelled by user -no changes were made.")
+        ROLLBACK_LOG.append("[ABORT] Rollback cancelled by user; no changes were made.")
         tde4.postQuestionRequester(
             "Rollback - Cancelled",
             "No changes were made.",

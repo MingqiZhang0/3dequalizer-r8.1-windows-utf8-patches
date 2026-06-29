@@ -54,7 +54,7 @@ Affected files in the `sys_data/py_scripts/` directory.
 | File | Action |
 |---|---|
 | `export_maya.py` | Added `encoding='utf-8', errors='replace'` to 3 `exec(open(script_path).read())` calls and 3 read-mode `open()` calls |
-| `calcMainCameraViaPiggybackCamera.py` | Added `encoding='utf-8', errors='replace'` to `open(path,"r")` at line 1134 |
+| `calcMainCameraViaPiggybackCamera.py` | Added strict `encoding='utf-8'` to `open(path,"r")` at line 1134. No `errors='replace'` is used for user calibration data. |
 | `export_flame_LD_3DE4_batch.py` | Added `encoding='utf-8', errors='replace'` to 5 read-mode `open()` calls (template loading) |
 
 ### Affected File Details
@@ -79,7 +79,9 @@ Affected files in the `sys_data/py_scripts/` directory.
 #### calcMainCameraViaPiggybackCamera.py (v1.5)
 | Line (approx) | Context | Change |
 |---|---|---|
-| 1134 | `importCalibration()` | `open(path,"r")` → `open(path,"r", encoding='utf-8', errors='replace')` |
+| 1134 | `importCalibration()` | `open(path,"r")` -> `open(path,"r", encoding='utf-8')` (strict, no errors='replace') |
+
+Note: Piggyback Camera calibration import reads user-supplied data, so it uses strict UTF-8 without `errors='replace'`. Invalid bytes should raise a visible error instead of being silently replaced.
 
 #### export_flame_LD_3DE4_batch.py (v1.7)
 | Line (approx) | Context | Change |

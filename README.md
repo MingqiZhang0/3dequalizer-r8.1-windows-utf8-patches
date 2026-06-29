@@ -59,13 +59,14 @@ This repository addresses two issues with 3DEqualizer4 R8.1 on Chinese Windows
 
 ## Repository Layout
 
-The four runnable tools are intentionally kept in the repository root
+The five runnable tools are intentionally kept in the repository root
 so users can easily select them from 3DEqualizer4's
 `Main Window > Python > Run Script...` dialog:
 
 - `Fix_Exporters_UTF8.py`
-- `Rollback_UTF8_Patches.py`
+- `Backup_UTF8_Patch_Targets.py`
 - `Scan_Exporters_UTF8_Status.py`
+- `Rollback_UTF8_Patches.py`
 - `Cleanup_UTF8_Backups.py`
 
 Detailed documentation is under `docs/`.
