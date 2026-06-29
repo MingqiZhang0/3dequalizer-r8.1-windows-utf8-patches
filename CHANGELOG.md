@@ -8,38 +8,83 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Planned
+
+- Future: move individual tools into `scripts/` after the manager
+  launcher remains stable.
+- Future: document exact-match table maintenance and optional
+  expected-count validation.
+- Future: add partial-write regression tests using an unpatched
+  3DE4 R8.1 test copy.
+
+---
+
+## [0.3.0] - 2026-06-29
+
 ### Added
 
-- `UTF8_Patch_Manager.py` - root-level unified launcher for the patch
-  toolkit.  Provides menu access to scan, backup, fix, rollback,
-  cleanup, and help while preserving each tool's own safety
-  confirmation dialogs.
-- `Fix_Exporters_UTF8.py` now supports patch scope selection (Blender
-  UTF-8, Maya UTF-8, Piggyback Camera UTF-8, Flame LD batch UTF-8,
-  Blender legacy menu fix).  Users can select specific scopes; unchecked
-  scopes are not modified and do not create backups.
+- `UTF8_Patch_Manager.py` - root-level unified launcher.  Menu
+  access to Scan, Backup, Fix, Undo, Cleanup, and Help while
+  preserving each tool's own safety confirmation dialogs.
+- Automatic toolkit root search:
+  - manager file directory (if available);
+  - current working directory;
+  - 3DE install path;
+  - common toolkit folder names;
+  - one-level subfolders under 3DE install path;
+  - `TOOLKIT_ROOT_OVERRIDE` manual fallback.
+- `Fix_Exporters_UTF8.py` patch scope selection.  Users can select
+  specific scopes; unchecked scopes are not modified and do not
+  create backups.  Supported scopes:
+  - Blender exporter UTF-8;
+  - Maya exporter UTF-8;
+  - Piggyback Camera UTF-8 (strict, no errors='replace');
+  - Flame LD batch UTF-8;
+  - Blender legacy menu fix.
 
 ### Changed
 
-- `UTF8_Patch_Manager.py` Tools menu: "Rollback" button renamed to
-  "Undo" for shorter button labels and narrower requester windows.
+- Manager Tools menu shortened to avoid narrow requester clipping.
+- Manager Help text shortened.
+- Manager root logging now prints only once per script run cycle.
+- README recommends keeping downloaded toolkit folder name
+  unchanged when possible.
+- README documents `TOOLKIT_ROOT_OVERRIDE`.
 
 ### Fixed
 
-- `UTF8_Patch_Manager.py` toolkit root resolution: now automatically
-  searches common locations including the 3DE install folder,
-  recommended subdirectory names (`Manual Patches`,
-  `3de_utf8_patch_toolkit`, `3dequalizer-r8.1-windows-utf8-patches`,
-  etc.), and one-level subdirectories under trusted base directories,
-  before falling back to `TOOLKIT_ROOT_OVERRIDE`.
-  Root-not-found UI now shows `Manual Patches` as an example layout.
+- Manager no longer fails when `__file__` is unavailable in 3DE
+  Run Script.
+- Manager now finds toolkit folders placed under the 3DE install
+  path, including `Manual Patches`.
+- Manager console no longer spams repeated root-resolved messages.
 
-### Planned
+### Documentation
 
-- v0.3.0: move individual tools into `scripts/` after the manager
-  is stable and well-tested.
-- Future: document exact-match table maintenance and optional
-  expected-count validation.
+- README manager usage and folder-name guidance.
+- `docs/Fix_README.md` Patch Scope Selection section.
+- `docs/RELEASE_NOTES_v0.3.0.md`.
+
+### Tested
+
+- Real 3DEqualizer4 R8.1 UI / launcher tests:
+  - manager auto-resolved toolkit root at
+    `F:\3DEqualizer4 R8.1\3DEqualizer4\Manual Patches`;
+  - manager root logging printed only once after logging fix;
+  - Tools requester buttons displayed without manual resizing;
+  - Manager -> Scan launched successfully;
+  - Manager -> Backup launched successfully and refused to back up
+    already-patched files;
+  - Manager -> Fix opened scope selection successfully;
+  - scope selection dialogs, final summary, and Cancel path
+    behaved normally.
+
+### Not Tested
+
+- Actual partial-write behavior on an unpatched 3DE4 R8.1 test
+  copy was not performed for this release.
+- No macOS / Linux testing.
+- No R8.0 / R8.2 / R9 testing.
 
 ---
 
