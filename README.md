@@ -85,7 +85,9 @@ Other 3DE versions and operating systems are **not** tested.
 2. Go to **Main Window → Python → Run Script…**
 3. Select **`Fix_Exporters_UTF8.py`** from this repository.
 4. Read the confirmation dialog carefully. It lists every file that
-   will be modified. Click **Proceed** to apply, or **Cancel** to abort.
+   will be modified. Clicking **Proceed** means you confirm that you
+   have already made a full backup of your 3DEqualizer4 installation
+   folder. Click **Cancel** to abort.
 5. After the script completes and shows its report, **fully exit
    3DEqualizer4** (do NOT just use "Rescan Python Directories").
 6. Restart 3DEqualizer4 normally.

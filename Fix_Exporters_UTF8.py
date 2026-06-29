@@ -462,6 +462,19 @@ def main():
     # -- Confirmation dialog (includes version info) --
     result = tde4.postQuestionRequester(
         "Fix Exporters UTF-8 v1.0",
+        "WARNING:\n"
+        "\n"
+        "Before continuing, you MUST back up your entire\n"
+        "3DEqualizer4 installation folder.\n"
+        "\n"
+        "This script modifies files inside your local\n"
+        "3DEqualizer4 installation.\n"
+        "\n"
+        "By clicking Proceed, you confirm that you have\n"
+        "already made a full backup and accept the risk.\n"
+        "\n"
+        "Click Cancel if you have not backed up yet.\n"
+        "\n"
         "Detected 3DE version:\n"
         "  %s\n"
         "  Supported: yes\n"
