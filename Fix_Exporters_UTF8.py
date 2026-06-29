@@ -459,9 +459,14 @@ def main():
 
     py_scripts = get_py_scripts_dir()
 
-    # -- Confirmation dialog (includes version info) --
-    result = tde4.postQuestionRequester(
-        "Fix Exporters UTF-8 v1.0",
+    # -- Confirmation dialog (Custom Requester with scrollable text area) --
+    req = tde4.createCustomRequester()
+
+    # Scrollable read-only text area (16 lines visible, non-editable)
+    tde4.addTextAreaWidget(req, "info", "", 16, 0)
+
+    # Build content
+    info_text = (
         "WARNING:\n"
         "\n"
         "Before continuing, you MUST back up your entire\n"
@@ -475,40 +480,50 @@ def main():
         "\n"
         "Click Cancel if you have not backed up yet.\n"
         "\n"
+        "----------------------------------------\n"
+        "\n"
         "Detected 3DE version:\n"
         "  %s\n"
         "  Supported: yes\n"
         "\n"
-        "This script will modify the following files\n"
-        "under your 3DEqualizer4 installation:\n"
+        "Files that will be modified:\n"
         "\n"
         "  MOVE:\n"
         "    py_scripts/export_blender.py\n"
         "    -> py_scripts_disabled/export_blender.py.bak\n"
         "\n"
-        "  PATCH (exact-match, add UTF-8 encoding):\n"
+        "  PATCH (add UTF-8 encoding):\n"
         "    py_scripts/exportBlender.py\n"
         "    py_scripts/export_maya.py\n"
         "    py_scripts/calcMainCameraViaPiggybackCamera.py\n"
-        "      (user-data path - strict UTF-8,\n"
-        "       NO errors='replace')\n"
+        "      (user-data path, strict UTF-8)\n"
         "    py_scripts/export_flame_LD_3DE4_batch.py\n"
         "\n"
-        "Backup files (.encoding_backup) will be\n"
-        "created only if a file actually changes.\n"
+        "Backup behavior:\n"
+        "  .encoding_backup files are created only\n"
+        "  if a file actually changes.\n"
         "\n"
-        "Patches are IDEMPOTENT - safe to re-run.\n"
+        "After applying:\n"
+        "  Fully restart 3DEqualizer4.\n"
+        "  Do NOT just rescan Python dirs.\n"
         "\n"
-        "After the fix, you MUST fully restart\n"
-        "3DEqualizer4 (do NOT just rescan Python dirs)."
-        % version_string,
+        "This patch is IDEMPOTENT.\n"
+        "Safe to re-run."
+    ) % version_string
+
+    tde4.appendTextAreaWidgetString(req, "info", info_text)
+
+    ret = tde4.postCustomRequester(
+        req,
+        "Fix Exporters UTF-8 v1.0",
+        560, 440,
         "Proceed", "Cancel",
     )
 
-    # tde4.postQuestionRequester returns 1 for the first button
-    # ("Proceed"), 2 for the second ("Cancel").  Anything else is
-    # treated as cancel to be safe.
-    if result != 1:
+    # tde4.postCustomRequester returns 1 for the first button ("Proceed"),
+    # 2 for the second ("Cancel").  Anything else is treated as cancel.
+    if ret != 1:
+        tde4.deleteCustomRequester(req)
         FIX_LOG.append("[ABORT] User cancelled - no changes were made.")
         tde4.postQuestionRequester(
             "Fix Exporters UTF-8 - Cancelled",
@@ -516,6 +531,8 @@ def main():
             "Ok",
         )
         return
+
+    tde4.deleteCustomRequester(req)
 
     # -- Phase 1: Blender name collision (unchanged logic) --
     fix_blender_name_collision(py_scripts)
