@@ -134,12 +134,44 @@ Original files are backed up with a `.encoding_backup` suffix before modificatio
 - Tested on **3DEqualizer4 R8.1** under **Chinese Windows locale** only.
 - **Use at your own risk.**
 
+## Validation / Smoke Test
+
+Validated manually on:
+
+- 3DEqualizer4 Release 8.1
+- Windows 11 Home
+- Chinese locale / GBK default encoding
+
+Smoke test procedure:
+
+1. Run `Fix_Exporters_UTF8.py` inside 3DEqualizer4
+   (Main Window > Python > Run Script...).
+2. Confirm the requester opens and the **Cancel** path makes no changes.
+3. Apply the patch with **Proceed**.
+4. Confirm the legacy Blender script is moved to
+   `sys_data/py_scripts_disabled/export_blender.py.bak`.
+5. Confirm exporter patch points report `OK` or `already patched`.
+6. Fully restart 3DEqualizer4.
+7. Verify:
+   - `Main Window > 3DE4 > Export Project > Blender...` (dialog appears)
+   - `Main Window > 3DE4 > Export Project > Maya...` (dialog appears)
+8. Re-run `Fix_Exporters_UTF8.py` and confirm idempotency: every entry
+   reports `SKIP already patched`.
+
+**Known limitation:** The patch is version-specific. The exact-match
+replacement table was built against a specific 3DEqualizer4 R8.1 build.
+If your local script files differ from the tested build, the patcher will
+report `WARN expected pattern not found`. Stop and verify manually if
+this occurs.
+
 ## Documentation
 
 | File | Content |
 |------|---------|
 | `Fix_README.md` | Detailed fix notes — root causes, symptoms, rollback |
 | `Potential_Risks.md` | Audit findings — ~200 items catalogued, not yet patched |
+| `CHANGELOG.md` | Version history (Keep a Changelog format) |
+| `RELEASE_NOTES_v0.1.0.md` | v0.1.0 GitHub Release notes |
 
 ## Development Note
 
