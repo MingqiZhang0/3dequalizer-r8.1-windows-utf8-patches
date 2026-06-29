@@ -8,10 +8,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- Moved individual tool scripts into the `scripts/` folder while
+  keeping `UTF8_Patch_Manager.py` in the repository root as the
+  main launcher.
+- Updated the manager launcher to resolve and run tools from the
+  new `scripts/` layout.
+
 ### Planned
 
-- Future: move individual tools into `scripts/` after the manager
-  launcher remains stable.
 - Future: document exact-match table maintenance and optional
   expected-count validation.
 - Future: add partial-write regression tests using an unpatched

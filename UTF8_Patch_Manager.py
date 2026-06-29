@@ -58,15 +58,21 @@ def get_3de_version_string():
 #   TOOLKIT_ROOT_OVERRIDE = r"E:\3DEqualizer4\3de_utf8_patch_toolkit"
 TOOLKIT_ROOT_OVERRIDE = ""
 
-# These five files must all be present for a directory to be considered
-# the toolkit root.
+# Tool scripts live under this subdirectory.
+SCRIPT_DIR_NAME = "scripts"
+
+# These five files must all be present in root/scripts/ for a
+# directory to be considered the new-layout toolkit root.
 REQUIRED_TOOL_FILES = [
-    "Fix_Exporters_UTF8.py",
-    "Backup_UTF8_Patch_Targets.py",
-    "Scan_Exporters_UTF8_Status.py",
-    "Rollback_UTF8_Patches.py",
-    "Cleanup_UTF8_Backups.py",
+    os.path.join(SCRIPT_DIR_NAME, "Fix_Exporters_UTF8.py"),
+    os.path.join(SCRIPT_DIR_NAME, "Backup_UTF8_Patch_Targets.py"),
+    os.path.join(SCRIPT_DIR_NAME, "Scan_Exporters_UTF8_Status.py"),
+    os.path.join(SCRIPT_DIR_NAME, "Rollback_UTF8_Patches.py"),
+    os.path.join(SCRIPT_DIR_NAME, "Cleanup_UTF8_Backups.py"),
 ]
+
+# The manager itself must also be present at the root.
+MANAGER_FILE = "UTF8_Patch_Manager.py"
 
 # Known toolkit folder names (checked under 3DE install dir and its parent).
 COMMON_TOOLKIT_DIR_NAMES = [
@@ -81,22 +87,31 @@ COMMON_TOOLKIT_DIR_NAMES = [
 ]
 
 TOOL_SCRIPTS = {
-    "scan":     "Scan_Exporters_UTF8_Status.py",
-    "backup":   "Backup_UTF8_Patch_Targets.py",
-    "fix":      "Fix_Exporters_UTF8.py",
-    "rollback": "Rollback_UTF8_Patches.py",
-    "cleanup":  "Cleanup_UTF8_Backups.py",
+    "scan":     os.path.join(SCRIPT_DIR_NAME, "Scan_Exporters_UTF8_Status.py"),
+    "backup":   os.path.join(SCRIPT_DIR_NAME, "Backup_UTF8_Patch_Targets.py"),
+    "fix":      os.path.join(SCRIPT_DIR_NAME, "Fix_Exporters_UTF8.py"),
+    "rollback": os.path.join(SCRIPT_DIR_NAME, "Rollback_UTF8_Patches.py"),
+    "cleanup":  os.path.join(SCRIPT_DIR_NAME, "Cleanup_UTF8_Backups.py"),
 }
 
 
 def is_toolkit_root(path):
-    """Return True if *path* contains all five required tool scripts."""
+    """
+    Return True if *path* is a valid toolkit root.
+
+    New layout (v0.4.0+): root contains UTF8_Patch_Manager.py
+    and a scripts/ subdirectory with all five tool scripts.
+    """
     if not path:
         return False
     try:
         path = os.path.abspath(path)
         if not os.path.isdir(path):
             return False
+        # Manager must be at root
+        if not os.path.isfile(os.path.join(path, MANAGER_FILE)):
+            return False
+        # All five tool scripts must be in scripts/
         for name in REQUIRED_TOOL_FILES:
             if not os.path.isfile(os.path.join(path, name)):
                 return False
