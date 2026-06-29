@@ -318,28 +318,19 @@ def classify(env_lines, path_lines, test_path, path_source):
     listdir_found = "basename in listdir: True" in full_report
 
     if path_accessible and listdir_found:
-        lines.append("Python can access the Unicode path normally.")
-        lines.append("")
-        lines.append("RESULT: Python path access OK")
-        lines.append("")
-        lines.append("Python filesystem access works for this path.")
-        lines.append("")
+        lines.append("Python can access the Chinese path normally.")
         if requester_mojibake:
-            lines.append("Mojibake was detected in the path string obtained")
-            lines.append("from the requester (Case D pattern).  This suggests")
-            lines.append("a path encoding conversion issue between 3DE native")
-            lines.append("UI and Python.")
-        else:
-            lines.append("Requester context:")
             lines.append("")
-            lines.append("- If File mode failed with UnicodeDecodeError or")
-            lines.append("  returned no path, this supports a native 3DE")
-            lines.append("  requester / path conversion limitation.")
-            lines.append("- If File mode works but a specific import workflow")
-            lines.append("  fails, investigate that importer script.")
-            lines.append("- If both File mode and Clip mode succeed and no")
-            lines.append("  specific import issue is reported, Python and")
-            lines.append("  the native requester both handle the path.")
+            lines.append("RESULT: Case D")
+            lines.append("  Likely path encoding conversion issue between")
+            lines.append("  3DE native UI and Python.  Workaround may require")
+            lines.append("  avoiding native requester or using manual path input.")
+        else:
+            lines.append("")
+            lines.append("RESULT: Case C")
+            lines.append("  Python and filesystem both handle the Chinese path.")
+            lines.append("  Issue may be limited to a specific importer/exporter")
+            lines.append("  script.  Investigate the exact import workflow.")
     elif path_not_accessible or not listdir_found:
         lines.append("Python cannot access the Chinese path reliably.")
         lines.append("")

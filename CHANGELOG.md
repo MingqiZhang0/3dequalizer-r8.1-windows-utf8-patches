@@ -27,10 +27,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - `Probe_Unicode_Paths.py` now supports interactive folder/file
   selection, so users do not need to edit `TEST_UNICODE_PATH`
   for normal testing.
-- `Probe_Unicode_Paths.py` Clipboard success now reports "Python
-  path access OK" with requester context notes, helping users
-  distinguish native 3DE requester limitations from Python
-  filesystem issues.
 
 ### Fixed
 
