@@ -22,6 +22,114 @@ FIX_LOG = []
 
 
 # ---------------------------------------------------------------------------
+# Patch scope definitions
+# ---------------------------------------------------------------------------
+SCOPE_BLENDER_UTF8       = "blender_utf8"
+SCOPE_MAYA_UTF8           = "maya_utf8"
+SCOPE_PIGGYBACK_UTF8      = "piggyback_utf8"
+SCOPE_FLAME_UTF8          = "flame_utf8"
+SCOPE_BLENDER_LEGACY_MENU = "blender_legacy_menu"
+
+SCOPE_DEFINITIONS = [
+    {
+        "id": SCOPE_BLENDER_UTF8,
+        "label": "Blender exporter UTF-8",
+        "desc": "Patch exportBlender.py UTF-8 reads.",
+    },
+    {
+        "id": SCOPE_MAYA_UTF8,
+        "label": "Maya exporter UTF-8",
+        "desc": "Patch export_maya.py UTF-8 reads.",
+    },
+    {
+        "id": SCOPE_PIGGYBACK_UTF8,
+        "label": "Piggyback Camera UTF-8",
+        "desc": "Patch Piggyback calibration import (strict UTF-8).",
+    },
+    {
+        "id": SCOPE_FLAME_UTF8,
+        "label": "Flame LD batch UTF-8",
+        "desc": "Patch Flame Matchbox template reads.",
+    },
+    {
+        "id": SCOPE_BLENDER_LEGACY_MENU,
+        "label": "Blender legacy menu fix",
+        "desc": "Disable legacy export_blender.py menu collision.",
+    },
+]
+
+_SCOPE_FILE_MAP = {
+    "exportBlender.py":                SCOPE_BLENDER_UTF8,
+    "export_maya.py":                  SCOPE_MAYA_UTF8,
+    "calcMainCameraViaPiggybackCamera.py": SCOPE_PIGGYBACK_UTF8,
+    "export_flame_LD_3DE4_batch.py":   SCOPE_FLAME_UTF8,
+}
+
+
+def scope_for_entry(entry):
+    """Return the scope id for a PATCH_TABLE entry, or None."""
+    fname = entry.get("file", "")
+    return _SCOPE_FILE_MAP.get(fname)
+
+
+def ask_patch_scopes():
+    """
+    Multi-step scope selection using postQuestionRequester.
+    Returns a set of selected scope ids, or None if cancelled.
+    """
+    selected = set()
+
+    # Quick choice: all or custom?
+    r = tde4.postQuestionRequester(
+        "Fix Exporters UTF-8 - Scopes",
+        "Select patch scopes.\n"
+        "\n"
+        "All scopes are recommended.\n"
+        "Advanced users may deselect scopes to\n"
+        "patch only specific exporters.\n"
+        "\n"
+        "Unchecked scopes will not be modified.",
+        "All Scopes", "Custom", "Cancel",
+    )
+
+    if r == 3 or r != 1 and r != 2:
+        return None  # Cancel
+
+    if r == 1:
+        # All
+        for sd in SCOPE_DEFINITIONS:
+            selected.add(sd["id"])
+        return selected
+
+    # r == 2: Custom - ask per scope
+    for sd in SCOPE_DEFINITIONS:
+        r2 = tde4.postQuestionRequester(
+            "Fix Exporters UTF-8 - Scope",
+            "Patch this scope?\n"
+            "\n"
+            "%s\n"
+            "  %s" % (sd["label"], sd["desc"]),
+            "Yes", "No", "Cancel",
+        )
+        if r2 == 1:
+            selected.add(sd["id"])
+        elif r2 == 3:
+            return None  # Cancel
+        # r2 == 2: No, skip this scope
+
+    return selected
+
+
+def format_scope_list(scope_ids):
+    """Format a scope-id set as a short text list."""
+    lines = []
+    for sd in SCOPE_DEFINITIONS:
+        marker = "[x]" if sd["id"] in scope_ids else "[ ]"
+        lines.append("%s %s" % (marker, sd["label"]))
+    return "\n".join(lines)
+
+
+# ---------------------------------------------------------------------------
 # Version guard - this patch is version-locked to 3DE4 R8.1
 # ---------------------------------------------------------------------------
 SUPPORTED_VERSION_MARKER = "Release 8.1"
@@ -459,7 +567,49 @@ def main():
 
     py_scripts = get_py_scripts_dir()
 
-    # -- Confirmation dialog (short, fits in standard message box) --
+    # -- Scope selection --
+    selected_scopes = ask_patch_scopes()
+    if selected_scopes is None:
+        FIX_LOG.append("[ABORT] User cancelled at scope selection.")
+        tde4.postQuestionRequester(
+            "Fix Exporters UTF-8 - Cancelled",
+            "No changes were made.",
+            "Ok",
+        )
+        return
+
+    if not selected_scopes:
+        tde4.postQuestionRequester(
+            "Fix Exporters UTF-8 - No Scopes",
+            "No patch scopes selected.\n"
+            "Nothing was changed.",
+            "Ok",
+        )
+        return
+
+    # -- Scope summary confirmation --
+    scope_text = format_scope_list(selected_scopes)
+    scope_confirm = tde4.postQuestionRequester(
+        "Fix Exporters UTF-8 - Confirm Scopes",
+        "Selected patch scopes:\n"
+        "\n"
+        "%s\n"
+        "\n"
+        "Only selected scopes will be modified.\n"
+        "Unchecked scopes will not be touched."
+        % scope_text,
+        "Proceed", "Cancel",
+    )
+    if scope_confirm != 1:
+        FIX_LOG.append("[ABORT] User cancelled at scope confirmation.")
+        tde4.postQuestionRequester(
+            "Fix Exporters UTF-8 - Cancelled",
+            "No changes were made.",
+            "Ok",
+        )
+        return
+
+    # -- Backup warning --
     result = tde4.postQuestionRequester(
         "Fix Exporters UTF-8 v1.0",
         "WARNING:\n"
@@ -477,20 +627,16 @@ def main():
         "  %s\n"
         "  Supported: yes\n"
         "\n"
-        "Patch scope:\n"
-        "  Blender / Maya / Piggyback / Flame exporters\n"
-        "  under sys_data/py_scripts/\n"
+        "Selected scopes:\n"
+        "%s\n"
         "\n"
         "After applying, fully restart 3DEqualizer4.\n"
         "\n"
         "Click Cancel if you have not backed up yet."
-        % version_string,
+        % (version_string, scope_text),
         "Proceed", "Cancel",
     )
 
-    # tde4.postQuestionRequester returns 1 for the first button
-    # ("Proceed"), 2 for the second ("Cancel").  Anything else is
-    # treated as cancel to be safe.
     if result != 1:
         FIX_LOG.append("[ABORT] User cancelled - no changes were made.")
         tde4.postQuestionRequester(
@@ -500,11 +646,25 @@ def main():
         )
         return
 
-    # -- Phase 1: Blender name collision (unchanged logic) --
-    fix_blender_name_collision(py_scripts)
+    # -- Phase 1: Blender name collision --
+    if SCOPE_BLENDER_LEGACY_MENU in selected_scopes:
+        fix_blender_name_collision(py_scripts)
+    else:
+        FIX_LOG.append("[SKIP] Blender legacy menu fix - scope not selected.")
 
-    # -- Phase 2: Apply encoding patches from the exact-match table --
+    # -- Phase 2: Apply encoding patches (scope-filtered) --
+    scope_report = ["Scope summary:"]
+    for sd in SCOPE_DEFINITIONS:
+        marker = "[x]" if sd["id"] in selected_scopes else "[ ]"
+        scope_report.append("  %s %s" % (marker, sd["label"]))
+    FIX_LOG.extend(scope_report)
+
     for entry in PATCH_TABLE:
+        scope = scope_for_entry(entry)
+        if scope is not None and scope not in selected_scopes:
+            FIX_LOG.append("[SKIP] %s: scope not selected."
+                           % entry.get("label", entry.get("file", "?")))
+            continue
         report_lines = apply_patch_table(entry)
         FIX_LOG.extend(report_lines)
 

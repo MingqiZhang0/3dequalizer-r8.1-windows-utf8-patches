@@ -107,6 +107,24 @@ Then **fully restart 3DE4** (do NOT just use `tde4.rescanPythonDirs()`).
 > [`../Fix_Exporters_UTF8.py`](../Fix_Exporters_UTF8.py). Do not use it as
 > the default entry point.
 
+## Patch Scope Selection
+
+v0.3.0 adds optional patch scope selection to `Fix_Exporters_UTF8.py`.
+
+Available scopes:
+
+| Scope | Target file |
+|-------|-------------|
+| Blender exporter UTF-8 | `exportBlender.py` |
+| Maya exporter UTF-8 | `export_maya.py` |
+| Piggyback Camera UTF-8 | `calcMainCameraViaPiggybackCamera.py` |
+| Flame LD batch UTF-8 | `export_flame_LD_3DE4_batch.py` |
+| Blender legacy menu fix | `export_blender.py` menu collision |
+
+Unchecked scopes are not modified, do not create backups, and
+report `SKIP scope not selected`.  All scopes are selected by
+default.  Advanced users can patch only specific exporters.
+
 ## Rollback
 
 All modified files have backup copies saved with suffix `.encoding_backup` in the same directory.

@@ -278,17 +278,29 @@ this occurs.
 Tools | Help | Cancel).  Run it inside 3DEqualizer4 instead of
 launching each tool script individually.
 
-If the manager cannot find the tool scripts, put the whole toolkit
-folder under your 3DEqualizer4 installation folder, for example:
+### Toolkit folder name
+
+For the manager's automatic search, keep the downloaded toolkit
+folder name unchanged when possible.  Recommended folder names
+include:
 
 ```text
-<3DE install path>\Manual Patches\
+3dequalizer-r8.1-windows-utf8-patches
+3dequalizer-r8.1-windows-utf8-patches-main
+Manual Patches
+3de_utf8_patch_toolkit
+```
+
+Recommended placement:
+
+```text
+<3DE install path>\3dequalizer-r8.1-windows-utf8-patches\
 ```
 
 or:
 
 ```text
-<3DE install path>\3de_utf8_patch_toolkit\
+<3DE install path>\Manual Patches\
 ```
 
 Keep all toolkit files together.  Do not copy only the manager

@@ -14,6 +14,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   toolkit.  Provides menu access to scan, backup, fix, rollback,
   cleanup, and help while preserving each tool's own safety
   confirmation dialogs.
+- `Fix_Exporters_UTF8.py` now supports patch scope selection (Blender
+  UTF-8, Maya UTF-8, Piggyback Camera UTF-8, Flame LD batch UTF-8,
+  Blender legacy menu fix).  Users can select specific scopes; unchecked
+  scopes are not modified and do not create backups.
+
+### Changed
+
+- `UTF8_Patch_Manager.py` Tools menu: "Rollback" button renamed to
+  "Undo" for shorter button labels and narrower requester windows.
 
 ### Fixed
 

@@ -417,8 +417,10 @@ def show_help():
         "  restore exporter source files.\n"
         "- Cleanup deletes local .encoding_backup files\n"
         "  and reduces rollback ability.\n"
-        "- After Fix or Rollback, fully restart\n"
+        "- After Fix or Undo, fully restart\n"
         "  3DEqualizer4.\n"
+        "- Keep the downloaded toolkit folder name\n"
+        "  unchanged when possible.\n"
         "\n"
         "If the manager cannot find tool scripts:\n"
         "\n"
@@ -436,24 +438,23 @@ def show_help():
 
 
 def menu_tools():
-    """Second-level menu: Backup | Fix | Rollback | More | Cancel"""
+    """Second-level menu: Backup | Fix | Undo | More | Cancel"""
     result = tde4.postQuestionRequester(
         "UTF-8 Patch Manager - Tools",
-        "Choose a tool to run.\n"
+        "Choose a tool.\n"
         "\n"
         "Backup:\n"
-        "  Create local .encoding_backup files before\n"
-        "  patching.\n"
+        "  Create local backup files before patching.\n"
         "\n"
         "Fix:\n"
-        "  Apply the UTF-8 exporter patch.\n"
+        "  Apply selected UTF-8 patches.\n"
         "\n"
-        "Rollback:\n"
-        "  Restore from local backups when available.\n"
+        "Undo:\n"
+        "  Roll back from local backups if available.\n"
         "\n"
         "More:\n"
-        "  Additional tools and help.",
-        "Backup", "Fix", "Rollback", "More", "Cancel",
+        "  Cleanup and help.",
+        "Backup", "Fix", "Undo", "More", "Cancel",
     )
 
     if result == 1:
