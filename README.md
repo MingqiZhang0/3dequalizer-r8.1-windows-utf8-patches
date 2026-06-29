@@ -281,16 +281,16 @@ checking whether Chinese folder names are handled by Python,
 
 Normally, run the probe inside 3DE and choose:
 
-- `File` to test the native 3DE file requester (may fail with
-  UnicodeDecodeError on Chinese paths);
-- `Clip` to read a path from the Windows clipboard via
-  `CF_UNICODETEXT`, bypassing 3DE requester encoding issues.
-  Copy the path in Windows Explorer first;
+- `File` to select any file inside the target folder (may fail
+  with UnicodeDecodeError on Chinese paths);
+- `Paste` to paste a full folder or file path directly, avoiding
+  the native requester;
 - `Skip` to run environment checks only.
 
-Use `Clip` if File mode fails on Chinese paths.  `TEST_UNICODE_PATH`
-at the top of the script remains a fallback for environments where
-clipboard access does not work.
+If File mode fails on Chinese paths with a UnicodeDecodeError,
+use Paste mode instead. Paste mode tests whether Python can
+access the same path without going through the native 3DE file
+requester.
 
 `TEST_UNICODE_PATH` at the top of the script is only a fallback
 for environments where 3DE requesters do not work.

@@ -269,7 +269,7 @@ def classify(env_lines, path_lines, test_path, path_source):
         lines.append("path could be tested.  This suggests a native")
         lines.append("requester / path conversion limitation.")
         lines.append("")
-        lines.append("Use Clipboard mode to test whether Python can")
+        lines.append("Use Paste mode to test whether Python can")
         lines.append("access the same path directly.")
         lines.append("")
         lines.append("Note: Case A (native 3DE UI / requester display")
@@ -277,21 +277,13 @@ def classify(env_lines, path_lines, test_path, path_source):
         lines.append("inspection of the requester window.")
         return lines
 
-    if path_source == "Clipboard path failed":
-        lines.append("RESULT: Clipboard path failed")
-        lines.append("")
-        lines.append("The probe could not read a usable path from the")
-        lines.append("Windows clipboard.")
-        lines.append("")
-        lines.append("Copy a folder/file path in Windows Explorer")
-        lines.append("and try again.")
-        return lines
-
     if path_source == "Paste path failed":
         lines.append("RESULT: Paste path failed")
         lines.append("")
-        lines.append("The 3DE custom requester text field failed.")
-        lines.append("Use Clipboard mode instead.")
+        lines.append("The paste path requester could not obtain a")
+        lines.append("valid path string.")
+        lines.append("")
+        lines.append("Check the console for error details.")
         return lines
 
     # No test path selected - environment-only run
@@ -395,81 +387,6 @@ def path_to_test_folder(path):
 
 
 # ---------------------------------------------------------------------------
-# Windows clipboard reader (bypasses 3DE requester encoding issues)
-# ---------------------------------------------------------------------------
-def read_windows_clipboard_text():
-    """
-    Read Unicode text from the Windows clipboard using CF_UNICODETEXT.
-    Returns (text, error_string).
-    """
-    if os.name != "nt":
-        return None, "Windows clipboard mode is only supported on Windows"
-    try:
-        import ctypes
-        from ctypes import wintypes
-
-        user32 = ctypes.windll.user32
-        kernel32 = ctypes.windll.kernel32
-        CF_UNICODETEXT = 13
-
-        if not user32.OpenClipboard(None):
-            return None, "OpenClipboard failed"
-
-        try:
-            handle = user32.GetClipboardData(CF_UNICODETEXT)
-            if not handle:
-                return None, "Clipboard does not contain Unicode text"
-
-            kernel32.GlobalLock.restype = ctypes.c_void_p
-            ptr = kernel32.GlobalLock(handle)
-            if not ptr:
-                return None, "GlobalLock failed"
-
-            try:
-                text = ctypes.wstring_at(ptr)
-            finally:
-                kernel32.GlobalUnlock(handle)
-
-            if text is None:
-                return None, "Clipboard text is None"
-
-            text = text.strip()
-            if not text:
-                return None, "Clipboard text is empty"
-
-            return text, None
-
-        finally:
-            user32.CloseClipboard()
-
-    except Exception as exc:
-        traceback.print_exc()
-        return None, str(exc)
-
-
-def ask_clipboard_path():
-    """Read a Unicode path from the Windows clipboard."""
-    text, error = read_windows_clipboard_text()
-    if error:
-        return "", error
-
-    # Handle multi-line clipboard (use first line)
-    lines = [l.strip() for l in text.splitlines() if l.strip()]
-    if not lines:
-        return "", "Clipboard text is empty"
-    path = lines[0]
-    if len(lines) > 1:
-        print("[INFO] Clipboard contained %d lines; using first line." % len(lines))
-
-    path = normalize_user_path(path)
-    if not path:
-        return "", "Clipboard path is empty after normalization"
-
-    folder, folder_error = path_to_test_folder(path)
-    return folder, folder_error  # folder_error may be None or a diagnostic message
-
-
-# ---------------------------------------------------------------------------
 # Interactive path selection
 # ---------------------------------------------------------------------------
 def ask_file_parent_path():
@@ -535,18 +452,17 @@ def interactive_select_path():
         "Choose how to select a Unicode path test target.\n"
         "\n"
         "File:\n"
-        "  Use native 3DE file requester.\n"
-        "  This may fail on Chinese paths.\n"
+        "  Select any file inside the target folder.\n"
+        "  This may fail if 3DE cannot decode Chinese\n"
+        "  paths.\n"
         "\n"
-        "Clip:\n"
-        "  Copy a folder/file path in Windows\n"
-        "  Explorer first.  Then choose Clip to\n"
-        "  read it from the Windows clipboard.\n"
-        "  This avoids 3DE requester encoding issues.\n"
+        "Paste:\n"
+        "  Paste a full folder path or file path.\n"
+        "  This avoids the native file requester.\n"
         "\n"
         "Skip:\n"
         "  Run environment checks only.",
-        "File", "Clip", "Skip", "Cancel",
+        "File", "Paste", "Skip", "Cancel",
     )
 
     if r == 4 or r < 1:
@@ -556,17 +472,19 @@ def interactive_select_path():
         return "", "Skip", "User chose environment checks only"
 
     if r == 1:
-        # File mode - test native requester
+        # File mode
         path, err = ask_file_parent_path()
         if path:
             return path, "File requester parent folder", None
+        # File requester failed - record as requester failure
         return "", "File requester failed", err or "File requester returned no path"
 
-    # r == 2: Clipboard mode
-    folder, err = ask_clipboard_path()
+    # r == 2: Paste mode
+    raw, err = ask_pasted_path()
     if err:
-        return "", "Clipboard path failed", err
-    return folder, "Clipboard path", None
+        return "", "Paste path failed", err
+    folder, err2 = path_to_test_folder(raw)
+    return folder, "Paste path", err2  # err2 may be None (success) or a diagnostic message
 
 
 # ---------------------------------------------------------------------------
@@ -647,22 +565,13 @@ def main():
     # Short popup
     if path_source == "File requester failed":
         popup_text = (
-            "Native file requester did not return a\n"
-            "usable path.\n"
+            "File requester failed.\n"
             "\n"
-            "Try Clipboard mode:\n"
-            "copy the path in Windows Explorer, then\n"
-            "run Probe again and choose Clip.\n"
+            "The native 3DE file requester could not\n"
+            "return a Chinese path.\n"
             "\n"
-            "Full report printed to console."
-        )
-    elif path_source in ("Clipboard path failed", "Paste path failed"):
-        popup_text = (
-            "Could not read a Unicode path.\n"
-            "\n"
-            "Try Clipboard mode:\n"
-            "copy the path in Windows Explorer, then\n"
-            "run Probe again and choose Clip.\n"
+            "Use Paste mode to test the same path\n"
+            "without the native requester.\n"
             "\n"
             "Full report printed to console."
         )
