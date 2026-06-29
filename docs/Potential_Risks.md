@@ -58,10 +58,11 @@ by the host application.
 
 ## 2. Encoding & Locale Risks
 
-### 2.1 Read-mode `open()` Without `encoding=` (~27 remaining)
+### 2.1 Read-mode `open()` Without `encoding=` (~20 remaining, non-exporter scripts only)
 
-The following non-exporter scripts are still at risk of `UnicodeDecodeError`
-on Windows with Chinese (GBK) locale:
+The following scripts outside the exporter patch scope are still at risk
+of `UnicodeDecodeError` on Windows with Chinese (GBK) locale.
+(18 exporter read-path opens are patched by `Fix_Exporters_UTF8.py`.)
 
 | File | Approx. Line(s) | Context |
 |------|-----------------|---------|

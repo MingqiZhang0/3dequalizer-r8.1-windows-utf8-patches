@@ -530,8 +530,15 @@ def apply_patch_table(entry):
         changed = True
 
     if changed:
-        with open(target, "w", encoding="utf-8") as f:
-            f.write(content)
+        try:
+            with open(target, "w", encoding="utf-8") as f:
+                f.write(content)
+        except Exception as e:
+            report_lines.append(
+                "[ERROR] %s: failed to write patched file - %s"
+                % (label, str(e))
+            )
+            return report_lines
 
     if not report_lines:
         report_lines.append("[SKIP] %s: empty entry list" % label)

@@ -174,7 +174,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - runnable tools remain in repository root for easier use from
     3DEqualizer4 `Run Script...`;
   - detailed documentation moved to `docs/`;
-  - legacy Blender-only helper moved to `legacy/`.
+  - legacy Blender-only helper moved to `legacy/` (removed in v0.4.0).
 - Scanner uses compact popup summary + full console report strategy
   to avoid 3DE requester clipping.
 - Scanner popup wording: `Backup files` / `Missing files`.
@@ -237,7 +237,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - `Rollback_UTF8_Patches.py` for safe, preview-before-execute rollback of
   all patch changes.
 - `Fix_Blender_Export.py` legacy Blender-only helper (superseded by the
-  main script; kept for reference).
+  main script; kept for reference; removed from active tree in v0.4.0).
 - `Potential_Risks.md` - read-only audit of ~250 scripts in the 3DE4 R8.1
   `sys_data/py_scripts/` directory, cataloguing encoding, robustness, and
   metadata issues.
